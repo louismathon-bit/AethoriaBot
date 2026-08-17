@@ -1,4 +1,3 @@
-```python
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -11,7 +10,8 @@ import aiohttp
 import os
 import asyncio
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+from zoneinfo import ZoneInfo
 
 
 # ============================================================
@@ -73,6 +73,9 @@ FICHIER_TOURNOI = "invites.json"
 TABLEAU_DE_BORD = "📊・tableau-de-bord"
 
 SERVEUR_MINECRAFT = "aethoria.omgcraft.fr"
+
+# Fuseau horaire français
+FUSEAU_FRANCE = ZoneInfo("Europe/Paris")
 
 
 # ============================================================
@@ -565,10 +568,6 @@ async def tournoi(
 
         return
 
-    # ========================================================
-    # DÉMARRER
-    # ========================================================
-
     if action.value == "demarrer":
 
         await interaction.response.defer()
@@ -621,10 +620,6 @@ async def tournoi(
 
         )
 
-    # ========================================================
-    # ARRÊTER
-    # ========================================================
-
     elif action.value == "arreter":
 
         donnees["actif"] = False
@@ -639,10 +634,6 @@ async def tournoi(
             "rapporteront plus de points."
 
         )
-
-    # ========================================================
-    # STATUT
-    # ========================================================
 
     elif action.value == "statut":
 
@@ -669,10 +660,6 @@ async def tournoi(
             f"⏳ En attente : **{attente}**"
 
         )
-
-    # ========================================================
-    # RESET
-    # ========================================================
 
     elif action.value == "reset":
 
@@ -948,10 +935,6 @@ async def salon(
 
         return
 
-    # ========================================================
-    # CRÉER
-    # ========================================================
-
     if action.value == "creer":
 
         if not nom:
@@ -1080,10 +1063,6 @@ async def salon(
 
         )
 
-    # ========================================================
-    # SUPPRIMER
-    # ========================================================
-
     elif action.value == "supprimer":
 
         if not salon:
@@ -1151,10 +1130,6 @@ async def salon(
             f"🗑️ Royaume **{nom_royaume}** supprimé."
 
         )
-
-    # ========================================================
-    # RENOMMER
-    # ========================================================
 
     elif action.value == "renommer":
 
@@ -1233,10 +1208,6 @@ async def salon(
             f"**{nouveau_nom}**."
 
         )
-
-    # ========================================================
-    # AJOUTER
-    # ========================================================
 
     elif action.value == "ajouter":
 
@@ -1332,10 +1303,6 @@ async def salon(
             f"au royaume **{nom_royaume}**."
 
         )
-
-    # ========================================================
-    # RETIRER
-    # ========================================================
 
     elif action.value == "retirer":
 
@@ -1518,10 +1485,6 @@ async def mettre_a_jour_tableau_de_bord():
             minecraft_max
         ) = await obtenir_statut_minecraft()
 
-        # ====================================================
-        # AFFICHAGE MINECRAFT
-        # ====================================================
-
         if minecraft_en_ligne:
 
             minecraft_status = (
@@ -1539,10 +1502,6 @@ async def mettre_a_jour_tableau_de_bord():
             minecraft_status = (
                 "🔴 **Hors ligne**"
             )
-
-        # ====================================================
-        # TOURNOI
-        # ====================================================
 
         if donnees["actif"]:
 
@@ -1597,10 +1556,6 @@ async def mettre_a_jour_tableau_de_bord():
 
             )
 
-        # ====================================================
-        # MESSAGE EXISTANT
-        # ====================================================
-
         message_trouve = None
 
         async for message in salon.history(
@@ -1650,26 +1605,33 @@ async def actualiser_tableau_de_bord():
 
 
 # ============================================================
-# MISE À JOUR À 00H00 ET 12H00
+# MISE À JOUR À 00H00 ET 12H00 — FRANCE
 # ============================================================
 
 @tasks.loop(
     time=[
-        __import__("datetime").time(
+        time(
             hour=0,
-            minute=0
+            minute=0,
+            tzinfo=FUSEAU_FRANCE
         ),
-        __import__("datetime").time(
+        time(
             hour=12,
-            minute=0
+            minute=0,
+            tzinfo=FUSEAU_FRANCE
         )
     ]
 )
 async def actualiser_midi_minuit():
 
+    maintenant = datetime.now(
+        FUSEAU_FRANCE
+    )
+
     print(
         "🕛 Mise à jour programmée "
-        "00h00 / 12h00"
+        f"à {maintenant.strftime('%H:%M:%S')} "
+        "heure française"
     )
 
     await mettre_a_jour_tableau_de_bord()
@@ -1710,15 +1672,12 @@ async def on_ready():
 
     await tree.sync()
 
-    # Première mise à jour immédiatement
     await mettre_a_jour_tableau_de_bord()
 
-    # Boucle toutes les minutes
     if not actualiser_tableau_de_bord.is_running():
 
         actualiser_tableau_de_bord.start()
 
-    # Boucle spéciale 00h00 / 12h00
     if not actualiser_midi_minuit.is_running():
 
         actualiser_midi_minuit.start()
@@ -1733,6 +1692,16 @@ async def on_ready():
     print(
         f"🌍 Serveurs : {len(bot.guilds)}"
     )
+
+    maintenant = datetime.now(
+        FUSEAU_FRANCE
+    )
+
+    print(
+        f"🇫🇷 Heure France : "
+        f"{maintenant.strftime('%d/%m/%Y %H:%M:%S')}"
+    )
+
     print("")
 
     for guild in bot.guilds:
@@ -1791,4 +1760,3 @@ async def on_ready():
 # ============================================================
 
 bot.run(TOKEN)
-```
