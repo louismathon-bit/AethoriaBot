@@ -1,43 +1,78 @@
+```python
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
 import discord
 from discord import app_commands
+from discord.ext import tasks
+
 import json
 import aiohttp
-from discord.ext import tasks
 import os
 import asyncio
+
 from datetime import datetime, timedelta
 
 
+# ============================================================
+# SERVEUR WEB — RENDER
+# ============================================================
+
 class HealthHandler(BaseHTTPRequestHandler):
+
     def do_GET(self):
+
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Aethoria Bot is online!")
+
+        self.wfile.write(
+            b"Aethoria Bot is online!"
+        )
 
     def log_message(self, format, *args):
         pass
 
 
 def start_web_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
+
+    server = HTTPServer(
+        ("0.0.0.0", port),
+        HealthHandler
+    )
+
     server.serve_forever()
 
 
-threading.Thread(target=start_web_server, daemon=True).start()
+threading.Thread(
+    target=start_web_server,
+    daemon=True
+).start()
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv(
+    "DISCORD_TOKEN"
+)
 
 CATEGORIE_ROYAUME = "「 🏰・ROYAUME 」"
+
 DUREE_VALIDATION = 24 * 60 * 60
 
 FICHIER_TOURNOI = "invites.json"
+
+TABLEAU_DE_BORD = "📊・tableau-de-bord"
+
+SERVEUR_MINECRAFT = "aethoria.omgcraft.fr"
 
 
 # ============================================================
@@ -45,6 +80,7 @@ FICHIER_TOURNOI = "invites.json"
 # ============================================================
 
 intents = discord.Intents.default()
+
 intents.members = True
 
 
@@ -52,7 +88,9 @@ bot = discord.Client(
     intents=intents
 )
 
-tree = app_commands.CommandTree(bot)
+tree = app_commands.CommandTree(
+    bot
+)
 
 
 # ============================================================
@@ -62,16 +100,23 @@ tree = app_commands.CommandTree(bot)
 def donnees_par_defaut():
 
     return {
+
         "actif": False,
+
         "invites": {},
+
         "en_attente": {},
+
         "snapshots": {}
+
     }
 
 
 def charger_donnees():
 
-    if not os.path.exists(FICHIER_TOURNOI):
+    if not os.path.exists(
+        FICHIER_TOURNOI
+    ):
 
         return donnees_par_defaut()
 
@@ -83,12 +128,29 @@ def charger_donnees():
             encoding="utf-8"
         ) as fichier:
 
-            donnees = json.load(fichier)
+            donnees = json.load(
+                fichier
+            )
 
-        donnees.setdefault("actif", False)
-        donnees.setdefault("invites", {})
-        donnees.setdefault("en_attente", {})
-        donnees.setdefault("snapshots", {})
+        donnees.setdefault(
+            "actif",
+            False
+        )
+
+        donnees.setdefault(
+            "invites",
+            {}
+        )
+
+        donnees.setdefault(
+            "en_attente",
+            {}
+        )
+
+        donnees.setdefault(
+            "snapshots",
+            {}
+        )
 
         return donnees
 
@@ -130,11 +192,15 @@ async def prendre_snapshot(guild):
 
         for invitation in invitations:
 
-            snapshot[invitation.code] = (
-                invitation.uses or 0
-            )
+            snapshot[
+                invitation.code
+            ] = invitation.uses or 0
 
-        donnees["snapshots"][str(guild.id)] = snapshot
+        donnees[
+            "snapshots"
+        ][
+            str(guild.id)
+        ] = snapshot
 
         sauvegarder()
 
@@ -152,8 +218,9 @@ async def prendre_snapshot(guild):
     except discord.Forbidden:
 
         print(
-            f"❌ Impossible de récupérer les "
-            f"invitations de : {guild.name}"
+            f"❌ Impossible de récupérer "
+            f"les invitations de : "
+            f"{guild.name}"
         )
 
         return None
@@ -161,7 +228,8 @@ async def prendre_snapshot(guild):
     except Exception as erreur:
 
         print(
-            f"❌ Erreur lors du snapshot : {erreur}"
+            f"❌ Erreur lors du snapshot : "
+            f"{erreur}"
         )
 
         return None
@@ -177,7 +245,9 @@ async def trouver_inviteur(guild):
 
         invitations = await guild.invites()
 
-        snapshot = donnees["snapshots"].get(
+        snapshot = donnees[
+            "snapshots"
+        ].get(
             str(guild.id),
             {}
         )
@@ -208,18 +278,19 @@ async def trouver_inviteur(guild):
 
                 invitation_trouvee = invitation
 
-        # Mise à jour du snapshot
         nouveau_snapshot = {}
 
         for invitation in invitations:
 
-            nouveau_snapshot[invitation.code] = (
-                invitation.uses or 0
-            )
+            nouveau_snapshot[
+                invitation.code
+            ] = invitation.uses or 0
 
-        donnees["snapshots"][str(guild.id)] = (
-            nouveau_snapshot
-        )
+        donnees[
+            "snapshots"
+        ][
+            str(guild.id)
+        ] = nouveau_snapshot
 
         sauvegarder()
 
@@ -230,14 +301,16 @@ async def trouver_inviteur(guild):
     except discord.Forbidden:
 
         print(
-            f"❌ Impossible de récupérer les "
-            f"invitations de : {guild.name}"
+            f"❌ Impossible de récupérer "
+            f"les invitations de : "
+            f"{guild.name}"
         )
 
     except Exception as erreur:
 
         print(
-            f"❌ Erreur invitations : {erreur}"
+            f"❌ Erreur invitations : "
+            f"{erreur}"
         )
 
     return None
@@ -254,7 +327,6 @@ async def on_member_join(member):
         f"👤 Nouveau membre : {member}"
     )
 
-    # Les bots ne participent pas
     if member.bot:
 
         print(
@@ -263,7 +335,6 @@ async def on_member_join(member):
 
         return
 
-    # Tournoi inactif
     if not donnees["actif"]:
 
         print(
@@ -285,22 +356,27 @@ async def on_member_join(member):
 
         return
 
-    # Empêcher une donnée précédente
-    # d'écraser la nouvelle
-    membre_id = str(member.id)
+    membre_id = str(
+        member.id
+    )
 
     validation = (
         datetime.utcnow()
-        + timedelta(seconds=DUREE_VALIDATION)
+        + timedelta(
+            seconds=DUREE_VALIDATION
+        )
     )
 
-    donnees["en_attente"][membre_id] = {
+    donnees[
+        "en_attente"
+    ][membre_id] = {
 
         "inviteur": inviter.id,
 
         "guild": member.guild.id,
 
         "validation": validation.isoformat()
+
     }
 
     sauvegarder()
@@ -336,9 +412,13 @@ async def valider_invitation(
         DUREE_VALIDATION
     )
 
-    membre_id = str(member_id)
+    membre_id = str(
+        member_id
+    )
 
-    invitation = donnees["en_attente"].get(
+    invitation = donnees[
+        "en_attente"
+    ].get(
         membre_id
     )
 
@@ -358,12 +438,11 @@ async def valider_invitation(
         member_id
     )
 
-    # Le membre a quitté
     if not membre:
 
-        del donnees["en_attente"][
-            membre_id
-        ]
+        del donnees[
+            "en_attente"
+        ][membre_id]
 
         sauvegarder()
 
@@ -378,15 +457,21 @@ async def valider_invitation(
         invitation["inviteur"]
     )
 
-    if inviter_id not in donnees["invites"]:
+    if inviter_id not in donnees[
+        "invites"
+    ]:
 
-        donnees["invites"][inviter_id] = 0
+        donnees[
+            "invites"
+        ][inviter_id] = 0
 
-    donnees["invites"][inviter_id] += 1
+    donnees[
+        "invites"
+    ][inviter_id] += 1
 
-    del donnees["en_attente"][
-        membre_id
-    ]
+    del donnees[
+        "en_attente"
+    ][membre_id]
 
     sauvegarder()
 
@@ -413,11 +498,13 @@ async def on_member_remove(member):
         member.id
     )
 
-    if membre_id in donnees["en_attente"]:
+    if membre_id in donnees[
+        "en_attente"
+    ]:
 
-        del donnees["en_attente"][
-            membre_id
-        ]
+        del donnees[
+            "en_attente"
+        ][membre_id]
 
         sauvegarder()
 
@@ -460,6 +547,7 @@ async def on_member_remove(member):
             name="Reset",
             value="reset"
         )
+
     ]
 )
 async def tournoi(
@@ -467,7 +555,6 @@ async def tournoi(
     action: app_commands.Choice[str]
 ):
 
-    # Permission administrateur du serveur
     if not interaction.user.guild_permissions.manage_guild:
 
         await interaction.response.send_message(
@@ -478,7 +565,6 @@ async def tournoi(
 
         return
 
-
     # ========================================================
     # DÉMARRER
     # ========================================================
@@ -487,15 +573,12 @@ async def tournoi(
 
         await interaction.response.defer()
 
-        # Nouveau tournoi
         donnees["actif"] = False
 
         donnees["invites"] = {}
 
         donnees["en_attente"] = {}
 
-        # IMPORTANT :
-        # On prend le snapshot exactement maintenant
         snapshot = await prendre_snapshot(
             interaction.guild
         )
@@ -503,8 +586,8 @@ async def tournoi(
         if snapshot is None:
 
             await interaction.followup.send(
-                "❌ Impossible de récupérer les "
-                "invitations.\n\n"
+                "❌ Impossible de récupérer "
+                "les invitations.\n\n"
                 "Le bot doit avoir les permissions "
                 "nécessaires pour lire les invitations."
             )
@@ -535,19 +618,8 @@ async def tournoi(
 
             "⏳ Le membre doit rester "
             "**24 heures** pour valider le point."
-        )
 
-        print("")
-        print("======================================")
-        print("🏆 TOURNOI DÉMARRÉ")
-        print("======================================")
-        print(
-            f"📨 Utilisations initiales : "
-            f"{total_utilisations}"
         )
-        print("======================================")
-        print("")
-
 
     # ========================================================
     # ARRÊTER
@@ -565,8 +637,8 @@ async def tournoi(
 
             "Les nouvelles invitations ne "
             "rapporteront plus de points."
-        )
 
+        )
 
     # ========================================================
     # STATUT
@@ -592,14 +664,11 @@ async def tournoi(
         await interaction.response.send_message(
 
             f"🏆 **TOURNOI D'INVITATIONS**\n\n"
-
             f"Statut : {statut}\n"
-
             f"🏆 Points validés : **{total}**\n"
-
             f"⏳ En attente : **{attente}**"
-        )
 
+        )
 
     # ========================================================
     # RESET
@@ -623,6 +692,7 @@ async def tournoi(
 
             "Toutes les statistiques ont été "
             "remises à zéro."
+
         )
 
 
@@ -648,7 +718,9 @@ async def invites(
         membre.id
     )
 
-    points = donnees["invites"].get(
+    points = donnees[
+        "invites"
+    ].get(
         membre_id,
         0
     )
@@ -658,9 +730,14 @@ async def invites(
         1
 
         for invitation
-        in donnees["en_attente"].values()
+        in donnees[
+            "en_attente"
+        ].values()
 
-        if invitation["inviteur"] == membre.id
+        if invitation[
+            "inviteur"
+        ] == membre.id
+
     )
 
     await interaction.response.send_message(
@@ -671,6 +748,7 @@ async def invites(
         f"🏆 Validées : **{points}**\n"
 
         f"⏳ En attente : **{attente}**"
+
     )
 
 
@@ -688,11 +766,14 @@ async def classement(
 
     classement_data = sorted(
 
-        donnees["invites"].items(),
+        donnees[
+            "invites"
+        ].items(),
 
         key=lambda element: element[1],
 
         reverse=True
+
     )
 
     if not classement_data:
@@ -702,6 +783,7 @@ async def classement(
             "🏆 **Classement vide**\n\n"
             "Aucune invitation validée pour "
             "le moment."
+
         )
 
         return
@@ -716,11 +798,15 @@ async def classement(
         "🥉"
     ]
 
-    for position, (user_id, points) in enumerate(
+    for position, (
+        user_id,
+        points
+    ) in enumerate(
 
         classement_data[:10],
 
         start=1
+
     ):
 
         membre = interaction.guild.get_member(
@@ -796,6 +882,7 @@ def permissions_royaume(
                 connect=True,
                 speak=True
             )
+
     }
 
 
@@ -840,6 +927,7 @@ def permissions_royaume(
             name="Retirer",
             value="retirer"
         )
+
     ]
 )
 async def salon(
@@ -859,7 +947,6 @@ async def salon(
         )
 
         return
-
 
     # ========================================================
     # CRÉER
@@ -886,6 +973,7 @@ async def salon(
             interaction.guild.categories,
 
             name=CATEGORIE_ROYAUME
+
         )
 
         if not categorie:
@@ -897,6 +985,7 @@ async def salon(
                 f"est introuvable.",
 
                 ephemeral=True
+
             )
 
             return
@@ -910,6 +999,7 @@ async def salon(
             interaction.guild.text_channels,
 
             name=nom_textuel
+
         )
 
         vocal_existant = discord.utils.get(
@@ -917,6 +1007,7 @@ async def salon(
             interaction.guild.voice_channels,
 
             name=nom_vocal
+
         )
 
         if textuel_existant or vocal_existant:
@@ -927,6 +1018,7 @@ async def salon(
                 f"existe déjà.",
 
                 ephemeral=True
+
             )
 
             return
@@ -936,6 +1028,7 @@ async def salon(
             interaction.guild,
 
             interaction.user
+
         )
 
         try:
@@ -948,6 +1041,7 @@ async def salon(
                     category=categorie,
 
                     overwrites=permissions
+
                 )
             )
 
@@ -959,6 +1053,7 @@ async def salon(
                     category=categorie,
 
                     overwrites=permissions
+
                 )
             )
 
@@ -970,6 +1065,7 @@ async def salon(
                 "nécessaires pour créer les salons.",
 
                 ephemeral=True
+
             )
 
             return
@@ -981,8 +1077,8 @@ async def salon(
             f"💬 {salon_textuel.mention}\n"
 
             f"🔊 **{salon_vocal.name}**"
-        )
 
+        )
 
     # ========================================================
     # SUPPRIMER
@@ -998,6 +1094,7 @@ async def salon(
                 "du royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1009,6 +1106,7 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1024,6 +1122,7 @@ async def salon(
             interaction.guild.voice_channels,
 
             name=f"🔊・{nom_royaume}"
+
         )
 
         try:
@@ -1042,6 +1141,7 @@ async def salon(
                 "ce salon.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1049,8 +1149,8 @@ async def salon(
         await interaction.response.send_message(
 
             f"🗑️ Royaume **{nom_royaume}** supprimé."
-        )
 
+        )
 
     # ========================================================
     # RENOMMER
@@ -1066,6 +1166,7 @@ async def salon(
                 "indique le nouveau nom.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1077,6 +1178,7 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1097,6 +1199,7 @@ async def salon(
             interaction.guild.voice_channels,
 
             name=f"🔊・{ancien_nom}"
+
         )
 
         try:
@@ -1119,6 +1222,7 @@ async def salon(
                 "ce royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1127,8 +1231,8 @@ async def salon(
 
             f"✏️ Royaume renommé en "
             f"**{nouveau_nom}**."
-        )
 
+        )
 
     # ========================================================
     # AJOUTER
@@ -1144,6 +1248,7 @@ async def salon(
                 "le membre.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1155,6 +1260,7 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1170,6 +1276,7 @@ async def salon(
             interaction.guild.voice_channels,
 
             name=f"🔊・{nom_royaume}"
+
         )
 
         permissions = discord.PermissionOverwrite(
@@ -1183,6 +1290,7 @@ async def salon(
             connect=True,
 
             speak=True
+
         )
 
         try:
@@ -1192,6 +1300,7 @@ async def salon(
                 membre,
 
                 overwrite=permissions
+
             )
 
             if vocal:
@@ -1201,6 +1310,7 @@ async def salon(
                     membre,
 
                     overwrite=permissions
+
                 )
 
         except discord.Forbidden:
@@ -1211,6 +1321,7 @@ async def salon(
                 "les permissions de ce royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1219,8 +1330,8 @@ async def salon(
 
             f"➕ {membre.mention} a été ajouté "
             f"au royaume **{nom_royaume}**."
-        )
 
+        )
 
     # ========================================================
     # RETIRER
@@ -1236,6 +1347,7 @@ async def salon(
                 "le membre.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1247,6 +1359,7 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1262,6 +1375,7 @@ async def salon(
             interaction.guild.voice_channels,
 
             name=f"🔊・{nom_royaume}"
+
         )
 
         try:
@@ -1271,6 +1385,7 @@ async def salon(
                 membre,
 
                 overwrite=None
+
             )
 
             if vocal:
@@ -1280,6 +1395,7 @@ async def salon(
                     membre,
 
                     overwrite=None
+
                 )
 
         except discord.Forbidden:
@@ -1290,6 +1406,7 @@ async def salon(
                 "les permissions de ce royaume.",
 
                 ephemeral=True
+
             )
 
             return
@@ -1298,84 +1415,108 @@ async def salon(
 
             f"➖ {membre.mention} a été retiré "
             f"du royaume **{nom_royaume}**."
+
         )
 
+
 # ============================================================
-# TABLEAU DE BORD
+# STATUT MINECRAFT
 # ============================================================
 
-TABLEAU_DE_BORD = "📊・tableau-de-bord"
+async def obtenir_statut_minecraft():
 
+    minecraft_en_ligne = False
+
+    minecraft_joueurs = 0
+
+    minecraft_max = 0
+
+    try:
+
+        url = (
+            "https://api.mcstatus.io/v2/status/java/"
+            f"{SERVEUR_MINECRAFT}"
+        )
+
+        timeout = aiohttp.ClientTimeout(
+            total=6
+        )
+
+        async with aiohttp.ClientSession(
+            timeout=timeout
+        ) as session:
+
+            async with session.get(
+                url
+            ) as response:
+
+                if response.status == 200:
+
+                    minecraft = await response.json()
+
+                    minecraft_en_ligne = minecraft.get(
+                        "online",
+                        False
+                    )
+
+                    if minecraft_en_ligne:
+
+                        joueurs = minecraft.get(
+                            "players",
+                            {}
+                        )
+
+                        minecraft_joueurs = joueurs.get(
+                            "online",
+                            0
+                        )
+
+                        minecraft_max = joueurs.get(
+                            "max",
+                            0
+                        )
+
+    except Exception as erreur:
+
+        print(
+            f"❌ Erreur statut Minecraft : "
+            f"{erreur}"
+        )
+
+    return (
+        minecraft_en_ligne,
+        minecraft_joueurs,
+        minecraft_max
+    )
+
+
+# ============================================================
+# MISE À JOUR DU TABLEAU DE BORD
+# ============================================================
 
 async def mettre_a_jour_tableau_de_bord():
 
     for guild in bot.guilds:
 
         salon = discord.utils.get(
+
             guild.text_channels,
+
             name=TABLEAU_DE_BORD
+
         )
 
         if salon is None:
+
             continue
 
         membres = guild.member_count or 0
 
-        # ====================================================
-        # SERVEUR MINECRAFT
-        # ====================================================
-
-        minecraft_en_ligne = False
-        minecraft_joueurs = 0
-        minecraft_max = 0
-
-        try:
-
-            url = (
-                "https://api.mcstatus.io/v2/status/java/"
-                "aethoria.omgcraft.fr"
-            )
-
-            timeout = aiohttp.ClientTimeout(total=6)
-
-            async with aiohttp.ClientSession(
-                timeout=timeout
-            ) as session:
-
-                async with session.get(url) as response:
-
-                    if response.status == 200:
-
-                        minecraft = await response.json()
-
-                        minecraft_en_ligne = minecraft.get(
-                            "online",
-                            False
-                        )
-
-                        if minecraft_en_ligne:
-
-                            joueurs = minecraft.get(
-                                "players",
-                                {}
-                            )
-
-                            minecraft_joueurs = joueurs.get(
-                                "online",
-                                0
-                            )
-
-                            minecraft_max = joueurs.get(
-                                "max",
-                                0
-                            )
-
-        except Exception as e:
-
-            print(
-                f"❌ Erreur statut Minecraft : {e}"
-            )
-
+        (
+            minecraft_en_ligne,
+            minecraft_joueurs,
+            minecraft_max
+        ) = await obtenir_statut_minecraft()
 
         # ====================================================
         # AFFICHAGE MINECRAFT
@@ -1384,9 +1525,13 @@ async def mettre_a_jour_tableau_de_bord():
         if minecraft_en_ligne:
 
             minecraft_status = (
+
                 "🟢 **En ligne**\n"
+
                 f"👤 Joueurs : **"
-                f"{minecraft_joueurs}/{minecraft_max}**"
+                f"{minecraft_joueurs}/"
+                f"{minecraft_max}**"
+
             )
 
         else:
@@ -1395,51 +1540,62 @@ async def mettre_a_jour_tableau_de_bord():
                 "🔴 **Hors ligne**"
             )
 
-
         # ====================================================
-        # TABLEAU DE BORD
+        # TOURNOI
         # ====================================================
 
         if donnees["actif"]:
 
             total_invites = sum(
-                donnees["invites"].values()
+                donnees[
+                    "invites"
+                ].values()
             )
 
             contenu = (
+
                 "🏰 **AETHORIA**\n"
+
                 "━━━━━━━━━━━━━━━━━━\n\n"
 
                 f"👥 **Membres Discord :** "
                 f"{membres}\n\n"
 
-                "🏆 **Tournoi :** 🟢 EN COURS\n"
+                "🏆 **Tournoi :** "
+                "🟢 EN COURS\n"
+
                 f"🎟️ **Invitations gagnées :** "
                 f"+{total_invites}\n\n"
 
                 "⛏️ **SERVEUR MINECRAFT**\n"
+
                 f"{minecraft_status}\n\n"
 
                 "━━━━━━━━━━━━━━━━━━"
+
             )
 
         else:
 
             contenu = (
+
                 "🏰 **AETHORIA**\n"
+
                 "━━━━━━━━━━━━━━━━━━\n\n"
 
                 f"👥 **Membres Discord :** "
                 f"{membres}\n\n"
 
-                "🏆 **Tournoi :** 🔴 AUCUN TOURNOI\n\n"
+                "🏆 **Tournoi :** "
+                "🔴 AUCUN TOURNOI\n\n"
 
                 "⛏️ **SERVEUR MINECRAFT**\n"
+
                 f"{minecraft_status}\n\n"
 
                 "━━━━━━━━━━━━━━━━━━"
-            )
 
+            )
 
         # ====================================================
         # MESSAGE EXISTANT
@@ -1447,18 +1603,23 @@ async def mettre_a_jour_tableau_de_bord():
 
         message_trouve = None
 
-        async for message in salon.history(limit=20):
+        async for message in salon.history(
+            limit=20
+        ):
 
             if (
+
                 message.author == bot.user
+
                 and message.content.startswith(
                     "🏰 **AETHORIA**"
                 )
+
             ):
 
                 message_trouve = message
-                break
 
+                break
 
         if message_trouve:
 
@@ -1471,8 +1632,15 @@ async def mettre_a_jour_tableau_de_bord():
             await salon.send(
                 contenu
             )
+
+        print(
+            f"📊 Tableau de bord mis à jour : "
+            f"{guild.name}"
+        )
+
+
 # ============================================================
-# DÉMARRAGE DU BOT
+# MISE À JOUR AUTOMATIQUE
 # ============================================================
 
 @tasks.loop(minutes=1)
@@ -1481,17 +1649,80 @@ async def actualiser_tableau_de_bord():
     await mettre_a_jour_tableau_de_bord()
 
 
+# ============================================================
+# MISE À JOUR À 00H00 ET 12H00
+# ============================================================
+
+@tasks.loop(
+    time=[
+        __import__("datetime").time(
+            hour=0,
+            minute=0
+        ),
+        __import__("datetime").time(
+            hour=12,
+            minute=0
+        )
+    ]
+)
+async def actualiser_midi_minuit():
+
+    print(
+        "🕛 Mise à jour programmée "
+        "00h00 / 12h00"
+    )
+
+    await mettre_a_jour_tableau_de_bord()
+
+
+# ============================================================
+# GESTION DES ERREURS DES BOUCLES
+# ============================================================
+
+@actualiser_tableau_de_bord.error
+async def erreur_tableau_de_bord(
+    erreur
+):
+
+    print(
+        f"❌ Erreur boucle tableau de bord : "
+        f"{erreur}"
+    )
+
+
+@actualiser_midi_minuit.error
+async def erreur_midi_minuit(
+    erreur
+):
+
+    print(
+        f"❌ Erreur boucle 00h00/12h00 : "
+        f"{erreur}"
+    )
+
+
+# ============================================================
+# DÉMARRAGE DU BOT
+# ============================================================
+
 @bot.event
 async def on_ready():
 
     await tree.sync()
 
+    # Première mise à jour immédiatement
     await mettre_a_jour_tableau_de_bord()
 
+    # Boucle toutes les minutes
     if not actualiser_tableau_de_bord.is_running():
 
         actualiser_tableau_de_bord.start()
-  
+
+    # Boucle spéciale 00h00 / 12h00
+    if not actualiser_midi_minuit.is_running():
+
+        actualiser_midi_minuit.start()
+
     print("")
     print("======================================")
     print("🤖 AETHORIA BOT CONNECTÉ")
@@ -1506,7 +1737,9 @@ async def on_ready():
 
     for guild in bot.guilds:
 
-        permissions = guild.me.guild_permissions
+        permissions = (
+            guild.me.guild_permissions
+        )
 
         print(
             "===== PERMISSIONS DU BOT ====="
@@ -1558,3 +1791,4 @@ async def on_ready():
 # ============================================================
 
 bot.run(TOKEN)
+```
