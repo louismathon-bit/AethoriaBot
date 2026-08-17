@@ -3,6 +3,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import discord
 from discord import app_commands
 import json
+import aiohttp
 import os
 import asyncio
 from datetime import datetime, timedelta
@@ -1319,6 +1320,85 @@ async def mettre_a_jour_tableau_de_bord():
 
         membres = guild.member_count or 0
 
+        # ====================================================
+        # SERVEUR MINECRAFT
+        # ====================================================
+
+        minecraft_en_ligne = False
+        minecraft_joueurs = 0
+        minecraft_max = 0
+
+        try:
+
+            url = (
+                "https://api.mcstatus.io/v2/status/java/"
+                "aethoria.omgcraft.fr"
+            )
+
+            timeout = aiohttp.ClientTimeout(total=6)
+
+            async with aiohttp.ClientSession(
+                timeout=timeout
+            ) as session:
+
+                async with session.get(url) as response:
+
+                    if response.status == 200:
+
+                        minecraft = await response.json()
+
+                        minecraft_en_ligne = minecraft.get(
+                            "online",
+                            False
+                        )
+
+                        if minecraft_en_ligne:
+
+                            joueurs = minecraft.get(
+                                "players",
+                                {}
+                            )
+
+                            minecraft_joueurs = joueurs.get(
+                                "online",
+                                0
+                            )
+
+                            minecraft_max = joueurs.get(
+                                "max",
+                                0
+                            )
+
+        except Exception as e:
+
+            print(
+                f"❌ Erreur statut Minecraft : {e}"
+            )
+
+
+        # ====================================================
+        # AFFICHAGE MINECRAFT
+        # ====================================================
+
+        if minecraft_en_ligne:
+
+            minecraft_status = (
+                "🟢 **En ligne**\n"
+                f"👤 Joueurs : **"
+                f"{minecraft_joueurs}/{minecraft_max}**"
+            )
+
+        else:
+
+            minecraft_status = (
+                "🔴 **Hors ligne**"
+            )
+
+
+        # ====================================================
+        # TABLEAU DE BORD
+        # ====================================================
+
         if donnees["actif"]:
 
             total_invites = sum(
@@ -1328,9 +1408,17 @@ async def mettre_a_jour_tableau_de_bord():
             contenu = (
                 "🏰 **AETHORIA**\n"
                 "━━━━━━━━━━━━━━━━━━\n\n"
-                f"👥 **Membres :** {membres}\n\n"
+
+                f"👥 **Membres Discord :** "
+                f"{membres}\n\n"
+
                 "🏆 **Tournoi :** 🟢 EN COURS\n"
-                f"🎟️ **Invitations gagnées :** +{total_invites}\n\n"
+                f"🎟️ **Invitations gagnées :** "
+                f"+{total_invites}\n\n"
+
+                "⛏️ **SERVEUR MINECRAFT**\n"
+                f"{minecraft_status}\n\n"
+
                 "━━━━━━━━━━━━━━━━━━"
             )
 
@@ -1339,22 +1427,37 @@ async def mettre_a_jour_tableau_de_bord():
             contenu = (
                 "🏰 **AETHORIA**\n"
                 "━━━━━━━━━━━━━━━━━━\n\n"
-                f"👥 **Membres :** {membres}\n\n"
+
+                f"👥 **Membres Discord :** "
+                f"{membres}\n\n"
+
                 "🏆 **Tournoi :** 🔴 AUCUN TOURNOI\n\n"
+
+                "⛏️ **SERVEUR MINECRAFT**\n"
+                f"{minecraft_status}\n\n"
+
                 "━━━━━━━━━━━━━━━━━━"
             )
 
-        # Cherche un message existant du bot
+
+        # ====================================================
+        # MESSAGE EXISTANT
+        # ====================================================
+
         message_trouve = None
 
         async for message in salon.history(limit=20):
 
             if (
                 message.author == bot.user
-                and message.content.startswith("🏰 **AETHORIA**")
+                and message.content.startswith(
+                    "🏰 **AETHORIA**"
+                )
             ):
+
                 message_trouve = message
                 break
+
 
         if message_trouve:
 
