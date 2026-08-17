@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.end_headers(s)
+        self.end_headers()
         self.wfile.write(b"Aethoria Bot is online!")
 
     def log_message(self, format, *args):
