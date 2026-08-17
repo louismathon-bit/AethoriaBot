@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 import json
 import aiohttp
+from discord.ext import tasks
 import os
 import asyncio
 from datetime import datetime, timedelta
@@ -1474,11 +1475,23 @@ async def mettre_a_jour_tableau_de_bord():
 # DÉMARRAGE DU BOT
 # ============================================================
 
+@tasks.loop(minutes=1)
+async def actualiser_tableau_de_bord():
+
+    await mettre_a_jour_tableau_de_bord()
+
+
 @bot.event
 async def on_ready():
 
     await tree.sync()
+
     await mettre_a_jour_tableau_de_bord()
+
+    if not actualiser_tableau_de_bord.is_running():
+
+        actualiser_tableau_de_bord.start()
+  
     print("")
     print("======================================")
     print("🤖 AETHORIA BOT CONNECTÉ")
