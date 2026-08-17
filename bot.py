@@ -1,10 +1,27 @@
-import discord
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandlerimport discord
 from discord import app_commands
 import json
 import os
 import asyncio
 from datetime import datetime, timedelta
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Aethoria Bot is online!")
 
+    def log_message(self, format, *args):
+        pass
+
+
+def start_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server.serve_forever()
+
+
+threading.Thread(target=start_web_server, daemon=True).start()
 
 # ============================================================
 # CONFIGURATION
