@@ -1298,7 +1298,75 @@ async def salon(
             f"du royaume **{nom_royaume}**."
         )
 
+# ============================================================
+# TABLEAU DE BORD
+# ============================================================
 
+TABLEAU_DE_BORD = "📊・tableau-de-bord"
+
+
+async def mettre_a_jour_tableau_de_bord():
+
+    for guild in bot.guilds:
+
+        salon = discord.utils.get(
+            guild.text_channels,
+            name=TABLEAU_DE_BORD
+        )
+
+        if salon is None:
+            continue
+
+        membres = guild.member_count or 0
+
+        if donnees["actif"]:
+
+            total_invites = sum(
+                donnees["invites"].values()
+            )
+
+            contenu = (
+                "🏰 **AETHORIA**\n"
+                "━━━━━━━━━━━━━━━━━━\n\n"
+                f"👥 **Membres :** {membres}\n\n"
+                "🏆 **Tournoi :** 🟢 EN COURS\n"
+                f"🎟️ **Invitations gagnées :** +{total_invites}\n\n"
+                "━━━━━━━━━━━━━━━━━━"
+            )
+
+        else:
+
+            contenu = (
+                "🏰 **AETHORIA**\n"
+                "━━━━━━━━━━━━━━━━━━\n\n"
+                f"👥 **Membres :** {membres}\n\n"
+                "🏆 **Tournoi :** 🔴 AUCUN TOURNOI\n\n"
+                "━━━━━━━━━━━━━━━━━━"
+            )
+
+        # Cherche un message existant du bot
+        message_trouve = None
+
+        async for message in salon.history(limit=20):
+
+            if (
+                message.author == bot.user
+                and message.content.startswith("🏰 **AETHORIA**")
+            ):
+                message_trouve = message
+                break
+
+        if message_trouve:
+
+            await message_trouve.edit(
+                content=contenu
+            )
+
+        else:
+
+            await salon.send(
+                contenu
+            )
 # ============================================================
 # DÉMARRAGE DU BOT
 # ============================================================
@@ -1307,7 +1375,7 @@ async def salon(
 async def on_ready():
 
     await tree.sync()
-
+    await mettre_a_jour_tableau_de_bord()
     print("")
     print("======================================")
     print("🤖 AETHORIA BOT CONNECTÉ")
