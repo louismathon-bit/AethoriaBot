@@ -2,3 +2,4 @@ invites.json
 .env
 __pycache__/
 bot_backup.py
+.DS_Store
