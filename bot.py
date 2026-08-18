@@ -722,12 +722,12 @@ async def salon(
     nom: str | None = None,
     membre: discord.Member | None = None
 ):
-    if not peut_gerer(interaction):
-        await interaction.response.send_message(
-            "❌ Tu dois avoir la permission **Gérer les salons**.",
-            ephemeral=True
-        )
-        return
+ if action.value != "creer" and not peut_gerer(interaction):
+    await interaction.response.send_message(
+        "❌ Tu dois avoir la permission **Gérer les salons**.",
+        ephemeral=True
+    )
+    return
 
     if action.value == "creer":
         if not nom:
