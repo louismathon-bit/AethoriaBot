@@ -1,3 +1,4 @@
+```python
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -10,8 +11,7 @@ import aiohttp
 import os
 import asyncio
 
-from datetime import datetime, timedelta, time
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta
 
 
 # ============================================================
@@ -74,9 +74,6 @@ TABLEAU_DE_BORD = "📊・tableau-de-bord"
 
 SERVEUR_MINECRAFT = "aethoria.omgcraft.fr"
 
-# Fuseau horaire français
-FUSEAU_FRANCE = ZoneInfo("Europe/Paris")
-
 
 # ============================================================
 # INTENTS
@@ -103,15 +100,10 @@ tree = app_commands.CommandTree(
 def donnees_par_defaut():
 
     return {
-
         "actif": False,
-
         "invites": {},
-
         "en_attente": {},
-
         "snapshots": {}
-
     }
 
 
@@ -131,31 +123,31 @@ def charger_donnees():
             encoding="utf-8"
         ) as fichier:
 
-            donnees = json.load(
+            donnees_chargees = json.load(
                 fichier
             )
 
-        donnees.setdefault(
+        donnees_chargees.setdefault(
             "actif",
             False
         )
 
-        donnees.setdefault(
+        donnees_chargees.setdefault(
             "invites",
             {}
         )
 
-        donnees.setdefault(
+        donnees_chargees.setdefault(
             "en_attente",
             {}
         )
 
-        donnees.setdefault(
+        donnees_chargees.setdefault(
             "snapshots",
             {}
         )
 
-        return donnees
+        return donnees_chargees
 
     except Exception:
 
@@ -330,6 +322,17 @@ async def on_member_join(member):
         f"👤 Nouveau membre : {member}"
     )
 
+    # --------------------------------------------------------
+    # MISE À JOUR IMMÉDIATE DU DASHBOARD
+    # --------------------------------------------------------
+
+    asyncio.create_task(
+        mettre_a_jour_tableau_de_bord(
+            member.guild
+        )
+    )
+
+    # Les bots ne participent pas au tournoi
     if member.bot:
 
         print(
@@ -338,6 +341,7 @@ async def on_member_join(member):
 
         return
 
+    # Tournoi inactif
     if not donnees["actif"]:
 
         print(
@@ -441,6 +445,7 @@ async def valider_invitation(
         member_id
     )
 
+    # Le membre a quitté
     if not membre:
 
         del donnees[
@@ -496,6 +501,20 @@ async def valider_invitation(
 
 @bot.event
 async def on_member_remove(member):
+
+    print(
+        f"👋 Membre parti : {member}"
+    )
+
+    # --------------------------------------------------------
+    # MISE À JOUR IMMÉDIATE DU DASHBOARD
+    # --------------------------------------------------------
+
+    asyncio.create_task(
+        mettre_a_jour_tableau_de_bord(
+            member.guild
+        )
+    )
 
     membre_id = str(
         member.id
@@ -568,6 +587,10 @@ async def tournoi(
 
         return
 
+    # ========================================================
+    # DÉMARRER
+    # ========================================================
+
     if action.value == "demarrer":
 
         await interaction.response.defer()
@@ -620,6 +643,10 @@ async def tournoi(
 
         )
 
+    # ========================================================
+    # ARRÊTER
+    # ========================================================
+
     elif action.value == "arreter":
 
         donnees["actif"] = False
@@ -634,6 +661,10 @@ async def tournoi(
             "rapporteront plus de points."
 
         )
+
+    # ========================================================
+    # STATUT
+    # ========================================================
 
     elif action.value == "statut":
 
@@ -660,6 +691,10 @@ async def tournoi(
             f"⏳ En attente : **{attente}**"
 
         )
+
+    # ========================================================
+    # RESET
+    # ========================================================
 
     elif action.value == "reset":
 
@@ -935,6 +970,10 @@ async def salon(
 
         return
 
+    # ========================================================
+    # CRÉER
+    # ========================================================
+
     if action.value == "creer":
 
         if not nom:
@@ -952,11 +991,8 @@ async def salon(
         )
 
         categorie = discord.utils.get(
-
             interaction.guild.categories,
-
             name=CATEGORIE_ROYAUME
-
         )
 
         if not categorie:
@@ -968,7 +1004,6 @@ async def salon(
                 f"est introuvable.",
 
                 ephemeral=True
-
             )
 
             return
@@ -978,19 +1013,13 @@ async def salon(
         nom_vocal = f"🔊・{nom}"
 
         textuel_existant = discord.utils.get(
-
             interaction.guild.text_channels,
-
             name=nom_textuel
-
         )
 
         vocal_existant = discord.utils.get(
-
             interaction.guild.voice_channels,
-
             name=nom_vocal
-
         )
 
         if textuel_existant or vocal_existant:
@@ -1001,17 +1030,13 @@ async def salon(
                 f"existe déjà.",
 
                 ephemeral=True
-
             )
 
             return
 
         permissions = permissions_royaume(
-
             interaction.guild,
-
             interaction.user
-
         )
 
         try:
@@ -1048,7 +1073,6 @@ async def salon(
                 "nécessaires pour créer les salons.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1063,6 +1087,10 @@ async def salon(
 
         )
 
+    # ========================================================
+    # SUPPRIMER
+    # ========================================================
+
     elif action.value == "supprimer":
 
         if not salon:
@@ -1073,7 +1101,6 @@ async def salon(
                 "du royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1085,7 +1112,6 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1120,7 +1146,6 @@ async def salon(
                 "ce salon.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1130,6 +1155,10 @@ async def salon(
             f"🗑️ Royaume **{nom_royaume}** supprimé."
 
         )
+
+    # ========================================================
+    # RENOMMER
+    # ========================================================
 
     elif action.value == "renommer":
 
@@ -1141,7 +1170,6 @@ async def salon(
                 "indique le nouveau nom.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1153,7 +1181,6 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1197,7 +1224,6 @@ async def salon(
                 "ce royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1209,6 +1235,10 @@ async def salon(
 
         )
 
+    # ========================================================
+    # AJOUTER
+    # ========================================================
+
     elif action.value == "ajouter":
 
         if not salon or not membre:
@@ -1219,7 +1249,6 @@ async def salon(
                 "le membre.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1231,7 +1260,6 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1267,21 +1295,15 @@ async def salon(
         try:
 
             await salon.set_permissions(
-
                 membre,
-
                 overwrite=permissions
-
             )
 
             if vocal:
 
                 await vocal.set_permissions(
-
                     membre,
-
                     overwrite=permissions
-
                 )
 
         except discord.Forbidden:
@@ -1292,7 +1314,6 @@ async def salon(
                 "les permissions de ce royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1304,6 +1325,10 @@ async def salon(
 
         )
 
+    # ========================================================
+    # RETIRER
+    # ========================================================
+
     elif action.value == "retirer":
 
         if not salon or not membre:
@@ -1314,7 +1339,6 @@ async def salon(
                 "le membre.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1326,7 +1350,6 @@ async def salon(
                 "❌ Ce n'est pas un salon de royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1348,21 +1371,15 @@ async def salon(
         try:
 
             await salon.set_permissions(
-
                 membre,
-
                 overwrite=None
-
             )
 
             if vocal:
 
                 await vocal.set_permissions(
-
                     membre,
-
                     overwrite=None
-
                 )
 
         except discord.Forbidden:
@@ -1373,7 +1390,6 @@ async def salon(
                 "les permissions de ce royaume.",
 
                 ephemeral=True
-
             )
 
             return
@@ -1461,23 +1477,44 @@ async def obtenir_statut_minecraft():
 # MISE À JOUR DU TABLEAU DE BORD
 # ============================================================
 
-async def mettre_a_jour_tableau_de_bord():
+async def mettre_a_jour_tableau_de_bord(
+    guild_cible=None
+):
 
-    for guild in bot.guilds:
+    guilds = (
+        [guild_cible]
+        if guild_cible
+        else bot.guilds
+    )
+
+    for guild in guilds:
+
+        if guild is None:
+            continue
 
         salon = discord.utils.get(
-
             guild.text_channels,
-
             name=TABLEAU_DE_BORD
-
         )
 
         if salon is None:
-
             continue
 
-        membres = guild.member_count or 0
+        # ====================================================
+        # NOMBRE DE MEMBRES
+        # ====================================================
+
+        # On compte uniquement les vrais membres.
+        # Les bots ne sont pas comptés.
+        membres = sum(
+            1
+            for membre in guild.members
+            if not membre.bot
+        )
+
+        # ====================================================
+        # STATUT MINECRAFT
+        # ====================================================
 
         (
             minecraft_en_ligne,
@@ -1488,13 +1525,10 @@ async def mettre_a_jour_tableau_de_bord():
         if minecraft_en_ligne:
 
             minecraft_status = (
-
                 "🟢 **En ligne**\n"
-
                 f"👤 Joueurs : **"
                 f"{minecraft_joueurs}/"
                 f"{minecraft_max}**"
-
             )
 
         else:
@@ -1503,18 +1537,18 @@ async def mettre_a_jour_tableau_de_bord():
                 "🔴 **Hors ligne**"
             )
 
+        # ====================================================
+        # TOURNOI
+        # ====================================================
+
         if donnees["actif"]:
 
             total_invites = sum(
-                donnees[
-                    "invites"
-                ].values()
+                donnees["invites"].values()
             )
 
             contenu = (
-
                 "🏰 **AETHORIA**\n"
-
                 "━━━━━━━━━━━━━━━━━━\n\n"
 
                 f"👥 **Membres Discord :** "
@@ -1526,20 +1560,16 @@ async def mettre_a_jour_tableau_de_bord():
                 f"🎟️ **Invitations gagnées :** "
                 f"+{total_invites}\n\n"
 
-                "⛏️ **SERVEUR MINECRAFT**\n"
-
+                "⛏️ **AETHORIA JAVA**\n"
                 f"{minecraft_status}\n\n"
 
                 "━━━━━━━━━━━━━━━━━━"
-
             )
 
         else:
 
             contenu = (
-
                 "🏰 **AETHORIA**\n"
-
                 "━━━━━━━━━━━━━━━━━━\n\n"
 
                 f"👥 **Membres Discord :** "
@@ -1548,13 +1578,15 @@ async def mettre_a_jour_tableau_de_bord():
                 "🏆 **Tournoi :** "
                 "🔴 AUCUN TOURNOI\n\n"
 
-                "⛏️ **SERVEUR MINECRAFT**\n"
-
+                "⛏️ **AETHORIA JAVA**\n"
                 f"{minecraft_status}\n\n"
 
                 "━━━━━━━━━━━━━━━━━━"
-
             )
+
+        # ====================================================
+        # CHERCHER LE MESSAGE EXISTANT
+        # ====================================================
 
         message_trouve = None
 
@@ -1563,75 +1595,81 @@ async def mettre_a_jour_tableau_de_bord():
         ):
 
             if (
-
                 message.author == bot.user
-
                 and message.content.startswith(
                     "🏰 **AETHORIA**"
                 )
-
             ):
 
                 message_trouve = message
 
                 break
 
-        if message_trouve:
+        # ====================================================
+        # MODIFIER OU CRÉER
+        # ====================================================
 
-            await message_trouve.edit(
-                content=contenu
-            )
+        try:
 
-        else:
+            if message_trouve:
 
-            await salon.send(
-                contenu
+                await message_trouve.edit(
+                    content=contenu
+                )
+
+            else:
+
+                await salon.send(
+                    contenu
+                )
+
+        except discord.Forbidden:
+
+            print(
+                f"❌ Impossible de modifier "
+                f"le dashboard de {guild.name}"
             )
 
         print(
-            f"📊 Tableau de bord mis à jour : "
-            f"{guild.name}"
+            f"📊 Dashboard mis à jour : "
+            f"{guild.name} — "
+            f"{membres} membres"
         )
 
 
 # ============================================================
-# MISE À JOUR AUTOMATIQUE
+# MISE À JOUR AUTOMATIQUE TOUTES LES MINUTES
 # ============================================================
 
-@tasks.loop(minutes=1)
+@tasks.loop(
+    minutes=1
+)
 async def actualiser_tableau_de_bord():
 
     await mettre_a_jour_tableau_de_bord()
 
 
 # ============================================================
-# MISE À JOUR À 00H00 ET 12H00 — FRANCE
+# MISE À JOUR À 00H00 ET 12H00
 # ============================================================
 
 @tasks.loop(
     time=[
-        time(
+        __import__("datetime").time(
             hour=0,
-            minute=0,
-            tzinfo=FUSEAU_FRANCE
+            minute=0
         ),
-        time(
+        __import__("datetime").time(
             hour=12,
-            minute=0,
-            tzinfo=FUSEAU_FRANCE
+            minute=0
         )
     ]
 )
 async def actualiser_midi_minuit():
 
-    maintenant = datetime.now(
-        FUSEAU_FRANCE
-    )
-
     print(
         "🕛 Mise à jour programmée "
-        f"à {maintenant.strftime('%H:%M:%S')} "
-        "heure française"
+        "00h00 / 12h00"
     )
 
     await mettre_a_jour_tableau_de_bord()
@@ -1672,12 +1710,15 @@ async def on_ready():
 
     await tree.sync()
 
+    # Première mise à jour immédiatement
     await mettre_a_jour_tableau_de_bord()
 
+    # Mise à jour toutes les minutes
     if not actualiser_tableau_de_bord.is_running():
 
         actualiser_tableau_de_bord.start()
 
+    # Mise à jour 00h00 / 12h00
     if not actualiser_midi_minuit.is_running():
 
         actualiser_midi_minuit.start()
@@ -1692,16 +1733,6 @@ async def on_ready():
     print(
         f"🌍 Serveurs : {len(bot.guilds)}"
     )
-
-    maintenant = datetime.now(
-        FUSEAU_FRANCE
-    )
-
-    print(
-        f"🇫🇷 Heure France : "
-        f"{maintenant.strftime('%d/%m/%Y %H:%M:%S')}"
-    )
-
     print("")
 
     for guild in bot.guilds:
@@ -1759,4 +1790,13 @@ async def on_ready():
 # LANCEMENT
 # ============================================================
 
-bot.run(TOKEN)
+if not TOKEN:
+
+    print(
+        "❌ ERREUR : DISCORD_TOKEN est introuvable."
+    )
+
+else:
+
+    bot.run(TOKEN)
+```
