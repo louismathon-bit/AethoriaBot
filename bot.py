@@ -1,4 +1,4 @@
-```python
+
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -1799,4 +1799,3 @@ if not TOKEN:
 else:
 
     bot.run(TOKEN)
-```
