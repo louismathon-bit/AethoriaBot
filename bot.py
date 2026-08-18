@@ -11,10 +11,12 @@ import os
 import asyncio
 
 from datetime import datetime, timedelta, time
-
 from dotenv import load_dotenv
 
+
 load_dotenv()
+
+
 # ============================================================
 # SERVEUR WEB — RENDER
 # ============================================================
@@ -22,24 +24,41 @@ load_dotenv()
 class HealthHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
+
         self.send_response(200)
-        self.send_header("Content-Type", "text/plain; charset=utf-8")
+
+        self.send_header(
+            "Content-Type",
+            "text/plain; charset=utf-8"
+        )
+
         self.end_headers()
-        self.wfile.write(b"Aethoria Bot is online!")
+
+        self.wfile.write(
+            b"Aethoria Bot is online!"
+        )
 
     def log_message(self, format, *args):
         pass
 
 
 def start_web_server():
-    port = int(os.environ.get("PORT", 10000))
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
 
     server = HTTPServer(
         ("0.0.0.0", port),
         HealthHandler
     )
 
-    print(f"🌐 Serveur web lancé sur le port {port}")
+    print(
+        f"🌐 Serveur web lancé sur le port {port}"
+    )
 
     server.serve_forever()
 
@@ -54,13 +73,15 @@ threading.Thread(
 # CONFIGURATION
 # ============================================================
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv(
+    "DISCORD_TOKEN"
+)
 
-CATEGORIE_ROYAUME = "「 🏰・ROYAUME 」"
+FICHIER_TOURNOI = "invites.json"
 
 DUREE_VALIDATION = 24 * 60 * 60
 
-FICHIER_TOURNOI = "invites.json"
+CATEGORIE_ROYAUME = "「 🏰・ROYAUME 」"
 
 TABLEAU_DE_BORD = "📊・tableau-de-bord"
 
@@ -100,6 +121,7 @@ tree = app_commands.CommandTree(bot)
 def donnees_par_defaut():
 
     return {
+
         "actif": False,
 
         "invites": {},
@@ -107,6 +129,8 @@ def donnees_par_defaut():
         "en_attente": {},
 
         "snapshots": {},
+
+        "royaumes": {},
 
         "statistiques": {
 
@@ -133,7 +157,9 @@ def donnees_par_defaut():
 
 def charger_donnees():
 
-    if not os.path.exists(FICHIER_TOURNOI):
+    if not os.path.exists(
+        FICHIER_TOURNOI
+    ):
 
         return donnees_par_defaut()
 
@@ -145,7 +171,9 @@ def charger_donnees():
             encoding="utf-8"
         ) as fichier:
 
-            donnees_chargees = json.load(fichier)
+            donnees_chargees = json.load(
+                fichier
+            )
 
         donnees_chargees.setdefault(
             "actif",
@@ -168,11 +196,18 @@ def charger_donnees():
         )
 
         donnees_chargees.setdefault(
+            "royaumes",
+            {}
+        )
+
+        donnees_chargees.setdefault(
             "statistiques",
             {}
         )
 
-        statistiques = donnees_chargees["statistiques"]
+        statistiques = donnees_chargees[
+            "statistiques"
+        ]
 
         statistiques.setdefault(
             "record_discord",
@@ -282,16 +317,24 @@ def enregistrer_evenement_membre(
 
     aujourd_hui = date_aujourdhui()
 
-    statistiques = donnees["statistiques"]
+    statistiques = donnees[
+        "statistiques"
+    ]
 
-    cle = f"{guild_id}:{aujourd_hui}"
+    cle = (
+        f"{guild_id}:{aujourd_hui}"
+    )
 
-    statistiques[type_evenement].setdefault(
+    statistiques[
+        type_evenement
+    ].setdefault(
         cle,
         0
     )
 
-    statistiques[type_evenement][cle] += 1
+    statistiques[
+        type_evenement
+    ][cle] += 1
 
     sauvegarder()
 
@@ -302,7 +345,9 @@ def compter_evenements(
     jours
 ):
 
-    statistiques = donnees["statistiques"]
+    statistiques = donnees[
+        "statistiques"
+    ]
 
     resultat = 0
 
@@ -311,9 +356,13 @@ def compter_evenements(
         jour = (
             datetime.now()
             - timedelta(days=i)
-        ).strftime("%Y-%m-%d")
+        ).strftime(
+            "%Y-%m-%d"
+        )
 
-        cle = f"{guild_id}:{jour}"
+        cle = (
+            f"{guild_id}:{jour}"
+        )
 
         resultat += statistiques[
             type_evenement
@@ -338,20 +387,28 @@ def enregistrer_historique(
 
     aujourd_hui = date_aujourdhui()
 
-    guild_id = str(guild.id)
+    guild_id = str(
+        guild.id
+    )
 
     historique = donnees[
         "statistiques"
-    ]["historique"]
+    ][
+        "historique"
+    ]
 
     historique.setdefault(
         guild_id,
         {}
     )
 
-    if aujourd_hui not in historique[guild_id]:
+    if aujourd_hui not in historique[
+        guild_id
+    ]:
 
-        historique[guild_id][aujourd_hui] = {
+        historique[
+            guild_id
+        ][aujourd_hui] = {
 
             "discord": membres,
 
@@ -371,25 +428,45 @@ def enregistrer_historique(
             guild_id
         ][aujourd_hui]
 
-        jour["discord"] = membres
+        jour[
+            "discord"
+        ] = membres
 
-        jour["java_max"] = max(
-            jour.get("java_max", 0),
+        jour[
+            "java_max"
+        ] = max(
+            jour.get(
+                "java_max",
+                0
+            ),
             java_joueurs
         )
 
-        jour["bedrock_max"] = max(
-            jour.get("bedrock_max", 0),
+        jour[
+            "bedrock_max"
+        ] = max(
+            jour.get(
+                "bedrock_max",
+                0
+            ),
             bedrock_joueurs
         )
 
-        jour["total_max"] = max(
-            jour.get("total_max", 0),
-            java_joueurs + bedrock_joueurs
+        jour[
+            "total_max"
+        ] = max(
+            jour.get(
+                "total_max",
+                0
+            ),
+            java_joueurs
+            + bedrock_joueurs
         )
 
     dates = sorted(
-        historique[guild_id].keys()
+        historique[
+            guild_id
+        ].keys()
     )
 
     while len(dates) > 30:
@@ -407,7 +484,9 @@ def enregistrer_historique(
 # SNAPSHOT INVITATIONS
 # ============================================================
 
-async def prendre_snapshot(guild):
+async def prendre_snapshot(
+    guild
+):
 
     try:
 
@@ -419,11 +498,16 @@ async def prendre_snapshot(guild):
 
             snapshot[
                 invitation.code
-            ] = invitation.uses or 0
+            ] = (
+                invitation.uses
+                or 0
+            )
 
         donnees[
             "snapshots"
-        ][str(guild.id)] = snapshot
+        ][
+            str(guild.id)
+        ] = snapshot
 
         sauvegarder()
 
@@ -457,7 +541,9 @@ async def prendre_snapshot(guild):
 # DÉTECTER L'INVITATION UTILISÉE
 # ============================================================
 
-async def trouver_inviteur(guild):
+async def trouver_inviteur(
+    guild
+):
 
     try:
 
@@ -486,7 +572,8 @@ async def trouver_inviteur(guild):
             )
 
             nouvelles_utilisations = (
-                invitation.uses or 0
+                invitation.uses
+                or 0
             )
 
             difference = (
@@ -513,7 +600,9 @@ async def trouver_inviteur(guild):
 
         donnees[
             "snapshots"
-        ][str(guild.id)] = nouveau_snapshot
+        ][
+            str(guild.id)
+        ] = nouveau_snapshot
 
         sauvegarder()
 
@@ -538,7 +627,7 @@ async def trouver_inviteur(guild):
 
 
 # ============================================================
-# TÂCHES DE VALIDATION
+# TÂCHES VALIDATION
 # ============================================================
 
 taches_validation = {}
@@ -576,7 +665,9 @@ async def valider_invitation(
                 secondes_attente
             )
 
-        membre_id = str(member_id)
+        membre_id = str(
+            member_id
+        )
 
         invitation = donnees[
             "en_attente"
@@ -616,7 +707,9 @@ async def valider_invitation(
             return
 
         inviter_id = str(
-            invitation["inviteur"]
+            invitation[
+                "inviteur"
+            ]
         )
 
         donnees[
@@ -669,29 +762,38 @@ async def valider_invitation(
 
 
 # ============================================================
-# RESTAURER LES VALIDATIONS APRÈS REDÉMARRAGE
+# RESTAURATION VALIDATIONS
 # ============================================================
 
 def restaurer_validations():
 
-    if not donnees["actif"]:
+    if not donnees[
+        "actif"
+    ]:
 
         return
 
     maintenant = datetime.utcnow()
 
     for membre_id, invitation in list(
-        donnees["en_attente"].items()
+        donnees[
+            "en_attente"
+        ].items()
     ):
 
         try:
 
-            date_validation = datetime.fromisoformat(
-                invitation["validation"]
+            date_validation = (
+                datetime.fromisoformat(
+                    invitation[
+                        "validation"
+                    ]
+                )
             )
 
             secondes = (
-                date_validation - maintenant
+                date_validation
+                - maintenant
             ).total_seconds()
 
             if secondes <= 0:
@@ -701,7 +803,11 @@ def restaurer_validations():
             tache = asyncio.create_task(
                 valider_invitation(
                     int(membre_id),
-                    int(invitation["guild"]),
+                    int(
+                        invitation[
+                            "guild"
+                        ]
+                    ),
                     secondes
                 )
             )
@@ -709,11 +815,6 @@ def restaurer_validations():
             taches_validation[
                 membre_id
             ] = tache
-
-            print(
-                f"🔄 Validation restaurée : "
-                f"{membre_id}"
-            )
 
         except Exception as erreur:
 
@@ -728,17 +829,15 @@ def restaurer_validations():
 # ============================================================
 
 @bot.event
-async def on_member_join(member):
+async def on_member_join(
+    member
+):
 
     print(
         f"👤 Nouveau membre : {member}"
     )
 
     if member.bot:
-
-        print(
-            "🤖 Membre ignoré : bot."
-        )
 
         return
 
@@ -753,11 +852,9 @@ async def on_member_join(member):
         )
     )
 
-    if not donnees["actif"]:
-
-        print(
-            "🔴 Tournoi inactif."
-        )
+    if not donnees[
+        "actif"
+    ]:
 
         return
 
@@ -766,11 +863,6 @@ async def on_member_join(member):
     )
 
     if not inviter:
-
-        print(
-            f"⚠️ Impossible de déterminer "
-            f"l'inviteur de {member}."
-        )
 
         return
 
@@ -799,10 +891,6 @@ async def on_member_join(member):
     sauvegarder()
 
     print(
-        "======================================"
-    )
-
-    print(
         "📨 NOUVELLE INVITATION"
     )
 
@@ -816,10 +904,6 @@ async def on_member_join(member):
 
     print(
         "⏳ Validation dans 24 heures"
-    )
-
-    print(
-        "======================================"
     )
 
     tache = asyncio.create_task(
@@ -840,7 +924,9 @@ async def on_member_join(member):
 # ============================================================
 
 @bot.event
-async def on_member_remove(member):
+async def on_member_remove(
+    member
+):
 
     print(
         f"👋 Membre parti : {member}"
@@ -879,323 +965,13 @@ async def on_member_remove(member):
 
         sauvegarder()
 
-        print(
-            f"❌ {member} a quitté "
-            f"avant les 24 heures."
-        )
-
 
 # ============================================================
-# PERMISSION TOURNOI
-# ============================================================
-
-def peut_gerer_tournoi(
-    interaction
-):
-
-    return (
-        interaction.user.guild_permissions.manage_guild
-        or interaction.user.guild_permissions.administrator
-    )
-
-
-# ============================================================
-# /TOURNOI
-# ============================================================
-
-@tree.command(
-    name="tournoi",
-    description="Gérer le tournoi d'invitations"
-)
-@app_commands.describe(
-    action="Action du tournoi"
-)
-@app_commands.choices(
-    action=[
-        app_commands.Choice(
-            name="Démarrer",
-            value="demarrer"
-        ),
-        app_commands.Choice(
-            name="Arrêter",
-            value="arreter"
-        ),
-        app_commands.Choice(
-            name="Statut",
-            value="statut"
-        ),
-        app_commands.Choice(
-            name="Reset",
-            value="reset"
-        )
-    ]
-)
-async def tournoi(
-    interaction: discord.Interaction,
-    action: app_commands.Choice[str]
-):
-
-    if not peut_gerer_tournoi(
-        interaction
-    ):
-
-        await interaction.response.send_message(
-            "❌ Tu dois avoir la permission "
-            "**Gérer le serveur**.",
-            ephemeral=True
-        )
-
-        return
-
-    if action.value == "demarrer":
-
-        await interaction.response.defer()
-
-        donnees["actif"] = False
-
-        donnees["invites"] = {}
-
-        donnees["en_attente"] = {}
-
-        for tache in taches_validation.values():
-
-            tache.cancel()
-
-        taches_validation.clear()
-
-        snapshot = await prendre_snapshot(
-            interaction.guild
-        )
-
-        if snapshot is None:
-
-            await interaction.followup.send(
-                "❌ Impossible de récupérer les invitations.\n\n"
-                "Vérifie que le bot possède la permission "
-                "**Gérer le serveur**."
-            )
-
-            return
-
-        donnees["actif"] = True
-
-        sauvegarder()
-
-        total_utilisations = sum(
-            snapshot.values()
-        )
-
-        await interaction.followup.send(
-            "🏆 **TOURNOI D'INVITATIONS DÉMARRÉ !**\n\n"
-            "📸 Le compteur commence **maintenant**.\n\n"
-            f"📨 Invitations existantes ignorées : "
-            f"**{total_utilisations} utilisations**\n\n"
-            "👤 Seuls les nouveaux membres invités "
-            "après maintenant pourront rapporter des points.\n\n"
-            "⏳ Le membre doit rester **24 heures** "
-            "pour valider le point."
-        )
-
-    elif action.value == "arreter":
-
-        donnees["actif"] = False
-
-        for tache in taches_validation.values():
-
-            tache.cancel()
-
-        taches_validation.clear()
-
-        sauvegarder()
-
-        await interaction.response.send_message(
-            "🛑 **Tournoi arrêté.**\n\n"
-            "Les nouvelles invitations ne rapporteront "
-            "plus de points.\n\n"
-            "ℹ️ Les invitations déjà en attente "
-            "ne seront plus validées."
-        )
-
-    elif action.value == "statut":
-
-        statut = (
-            "🟢 **ACTIF**"
-            if donnees["actif"]
-            else
-            "🔴 **INACTIF**"
-        )
-
-        total = sum(
-            donnees["invites"].values()
-        )
-
-        attente = len(
-            donnees["en_attente"]
-        )
-
-        await interaction.response.send_message(
-            "🏆 **TOURNOI D'INVITATIONS**\n\n"
-            f"Statut : {statut}\n"
-            f"🏆 Points validés : **{total}**\n"
-            f"⏳ En attente : **{attente}**"
-        )
-
-    elif action.value == "reset":
-
-        donnees["actif"] = False
-
-        donnees["invites"] = {}
-
-        donnees["en_attente"] = {}
-
-        donnees["snapshots"] = {}
-
-        for tache in taches_validation.values():
-
-            tache.cancel()
-
-        taches_validation.clear()
-
-        sauvegarder()
-
-        await interaction.response.send_message(
-            "🔄 **Tournoi réinitialisé !**\n\n"
-            "Toutes les statistiques du tournoi "
-            "ont été remises à zéro."
-        )
-
-
-# ============================================================
-# /INVITES
-# ============================================================
-
-@tree.command(
-    name="invites",
-    description="Voir les invitations d'un membre"
-)
-@app_commands.describe(
-    membre="Membre à consulter"
-)
-async def invites(
-    interaction: discord.Interaction,
-    membre: discord.Member | None = None
-):
-
-    membre = (
-        membre
-        or interaction.user
-    )
-
-    membre_id = str(
-        membre.id
-    )
-
-    points = donnees[
-        "invites"
-    ].get(
-        membre_id,
-        0
-    )
-
-    attente = sum(
-        1
-        for invitation in donnees[
-            "en_attente"
-        ].values()
-        if invitation["inviteur"] == membre.id
-    )
-
-    await interaction.response.send_message(
-        f"📨 **Invitations de "
-        f"{membre.display_name}**\n\n"
-        f"🏆 Validées : **{points}**\n"
-        f"⏳ En attente : **{attente}**"
-    )
-
-
-# ============================================================
-# /CLASSEMENT
-# ============================================================
-
-@tree.command(
-    name="classement",
-    description="Voir le classement des invitations"
-)
-async def classement(
-    interaction: discord.Interaction
-):
-
-    classement_data = sorted(
-        donnees["invites"].items(),
-        key=lambda element: element[1],
-        reverse=True
-    )
-
-    if not classement_data:
-
-        await interaction.response.send_message(
-            "🏆 **Classement vide**\n\n"
-            "Aucune invitation validée pour le moment."
-        )
-
-        return
-
-    texte = (
-        "🏆 **CLASSEMENT DES INVITATIONS**\n\n"
-    )
-
-    medailles = [
-        "🥇",
-        "🥈",
-        "🥉"
-    ]
-
-    for position, (
-        user_id,
-        points
-    ) in enumerate(
-        classement_data[:10],
-        start=1
-    ):
-
-        membre = interaction.guild.get_member(
-            int(user_id)
-        )
-
-        if membre:
-
-            nom = membre.mention
-
-        else:
-
-            nom = f"<@{user_id}>"
-
-        if position <= 3:
-
-            prefixe = medailles[
-                position - 1
-            ]
-
-        else:
-
-            prefixe = f"**{position}.**"
-
-        texte += (
-            f"{prefixe} {nom} — "
-            f"**{points}** invitations\n"
-        )
-
-    await interaction.response.send_message(
-        texte
-    )
-
-
-# ============================================================
-# SYSTÈME ROYAUMES
+# PERMISSIONS STAFF
 # ============================================================
 
 def peut_gerer(
-    interaction
+    interaction: discord.Interaction
 ):
 
     return (
@@ -1204,37 +980,148 @@ def peut_gerer(
     )
 
 
+# ============================================================
+# NETTOYAGE NOM ROYAUME
+# ============================================================
+
+def nettoyer_nom_royaume(
+    nom
+):
+
+    nom = nom.lower().strip()
+
+    nom = nom.replace(
+        " ",
+        "-"
+    )
+
+    caracteres_interdits = [
+        "@",
+        "#",
+        ":",
+        "`",
+        "*",
+        "_"
+    ]
+
+    for caractere in caracteres_interdits:
+
+        nom = nom.replace(
+            caractere,
+            ""
+        )
+
+    nom = nom[:80]
+
+    return nom
+
+
+# ============================================================
+# TROUVER LE ROYAUME
+# ============================================================
+
+def obtenir_royaume_par_salon(
+    salon
+):
+
+    if not salon:
+
+        return None
+
+    if not salon.name.startswith(
+        "🔒・"
+    ):
+
+        return None
+
+    return donnees[
+        "royaumes"
+    ].get(
+        str(salon.id)
+    )
+
+
+# ============================================================
+# VÉRIFIER PROPRIÉTAIRE OU STAFF
+# Le propriétaire ET le staff ayant « Gérer les salons »
+# peuvent gérer le royaume.
+# ============================================================
+
+def est_proprietaire_ou_staff(
+    interaction,
+    royaume
+):
+
+    if not royaume:
+
+        return False
+
+    if peut_gerer(
+        interaction
+    ):
+
+        return True
+
+    return (
+        str(
+            interaction.user.id
+        )
+        == str(
+            royaume[
+                "proprietaire"
+            ]
+        )
+    )
+
+
+# ============================================================
+# PERMISSIONS ROYAUME
+# ============================================================
+
 def permissions_royaume(
     guild,
     createur
 ):
 
-    return {
+    overwrites = {
 
         guild.default_role:
-        discord.PermissionOverwrite(
-            view_channel=False
-        ),
-
-        guild.me:
-        discord.PermissionOverwrite(
-            view_channel=True,
-            send_messages=True,
-            read_message_history=True,
-            connect=True,
-            speak=True,
-            manage_channels=True
-        ),
+            discord.PermissionOverwrite(
+                view_channel=False
+            ),
 
         createur:
-        discord.PermissionOverwrite(
-            view_channel=True,
-            send_messages=True,
-            read_message_history=True,
-            connect=True,
-            speak=True
-        )
+            discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                connect=True,
+                speak=True
+            )
     }
+
+    if guild.me:
+
+        overwrites[
+            guild.me
+        ] = discord.PermissionOverwrite(
+
+            view_channel=True,
+
+            send_messages=True,
+
+            read_message_history=True,
+
+            connect=True,
+
+            speak=True,
+
+            manage_channels=True,
+
+            manage_permissions=True
+        )
+
+    return overwrites
 
 
 # ============================================================
@@ -1243,32 +1130,37 @@ def permissions_royaume(
 
 @tree.command(
     name="salon",
-    description="Gérer les salons des royaumes"
+    description="Gérer ton salon de royaume"
 )
 @app_commands.describe(
     action="Action à effectuer",
-    salon="Salon textuel concerné",
+    salon="Salon textuel du royaume",
     nom="Nom du royaume",
     membre="Membre concerné"
 )
 @app_commands.choices(
     action=[
+
         app_commands.Choice(
             name="Créer",
             value="creer"
         ),
+
         app_commands.Choice(
             name="Supprimer",
             value="supprimer"
         ),
+
         app_commands.Choice(
             name="Renommer",
             value="renommer"
         ),
+
         app_commands.Choice(
             name="Ajouter",
             value="ajouter"
         ),
+
         app_commands.Choice(
             name="Retirer",
             value="retirer"
@@ -1283,41 +1175,43 @@ async def salon(
     membre: discord.Member | None = None
 ):
 
-    # --------------------------------------------------------
-    # PERMISSION
-    # --------------------------------------------------------
-
-    if not peut_gerer(
-        interaction
-    ):
+    if interaction.guild is None:
 
         await interaction.response.send_message(
-            "❌ Tu dois avoir la permission "
-            "**Gérer les salons**.",
+            "❌ Cette commande doit être utilisée sur un serveur Discord.",
             ephemeral=True
         )
 
         return
 
-    # --------------------------------------------------------
+    # ========================================================
     # CRÉER
-    # --------------------------------------------------------
+    # ACCESSIBLE À TOUT LE MONDE
+    # ========================================================
 
     if action.value == "creer":
 
         if not nom:
 
             await interaction.response.send_message(
-                "❌ Indique le nom du royaume.",
+                "❌ Indique le nom de ton royaume.",
                 ephemeral=True
             )
 
             return
 
-        nom = (
-            nom.lower()
-            .replace(" ", "-")
+        nom = nettoyer_nom_royaume(
+            nom
         )
+
+        if not nom:
+
+            await interaction.response.send_message(
+                "❌ Le nom du royaume est invalide.",
+                ephemeral=True
+            )
+
+            return
 
         categorie = discord.utils.get(
             interaction.guild.categories,
@@ -1329,7 +1223,8 @@ async def salon(
             await interaction.response.send_message(
                 f"❌ La catégorie "
                 f"`{CATEGORIE_ROYAUME}` "
-                "est introuvable.",
+                "n'existe pas.\n\n"
+                "Demande au staff de la créer.",
                 ephemeral=True
             )
 
@@ -1377,147 +1272,320 @@ async def salon(
                 await interaction.guild.create_text_channel(
                     name=nom_textuel,
                     category=categorie,
-                    overwrites=permissions
+                    overwrites=permissions,
+                    reason=(
+                        f"Création du royaume "
+                        f"{nom} par "
+                        f"{interaction.user}"
+                    )
                 )
             )
 
-            salon_vocal = (
-                await interaction.guild.create_voice_channel(
-                    name=nom_vocal,
-                    category=categorie,
-                    overwrites=permissions
+            try:
+
+                salon_vocal = (
+                    await interaction.guild.create_voice_channel(
+                        name=nom_vocal,
+                        category=categorie,
+                        overwrites=permissions,
+                        reason=(
+                            f"Création du royaume "
+                            f"{nom} par "
+                            f"{interaction.user}"
+                        )
+                    )
+                )
+
+            except Exception:
+
+                await salon_textuel.delete()
+
+                raise
+
+        except discord.Forbidden:
+
+            await interaction.response.send_message(
+                "❌ Le bot n'a pas les permissions "
+                "nécessaires pour créer le royaume.",
+                ephemeral=True
+            )
+
+            return
+
+        except discord.HTTPException as erreur:
+
+            print(
+                f"❌ Erreur création royaume : {erreur}"
+            )
+
+            await interaction.response.send_message(
+                "❌ Une erreur Discord est survenue "
+                "pendant la création.",
+                ephemeral=True
+            )
+
+            return
+
+        # ====================================================
+        # ENREGISTREMENT DU PROPRIÉTAIRE
+        # ====================================================
+
+        donnees[
+            "royaumes"
+        ][
+            str(salon_textuel.id)
+        ] = {
+
+            "proprietaire": interaction.user.id,
+
+            "nom": nom,
+
+            "salon_textuel": salon_textuel.id,
+
+            "salon_vocal": salon_vocal.id,
+
+            "guild": interaction.guild.id,
+
+            "membres": [
+                interaction.user.id
+            ]
+        }
+
+        sauvegarder()
+
+        await interaction.response.send_message(
+
+            "🏰 **ROYAUME CRÉÉ !**\n\n"
+
+            f"👑 Propriétaire : "
+            f"{interaction.user.mention}\n\n"
+
+            f"💬 Salon : "
+            f"{salon_textuel.mention}\n\n"
+
+            f"🔊 Vocal : "
+            f"**{salon_vocal.name}**\n\n"
+
+            "🔒 Ton royaume est privé.\n"
+            "➕ Tu peux ajouter des membres avec "
+            "`/salon ajouter`.\n"
+            "➖ Tu peux les retirer avec "
+            "`/salon retirer`.\n"
+            "🗑️ Tu peux supprimer ton royaume avec "
+            "`/salon supprimer`."
+        )
+
+        return
+
+    # ========================================================
+    # LES AUTRES ACTIONS NÉCESSITENT UN SALON
+    # ========================================================
+
+    if not salon:
+
+        await interaction.response.send_message(
+            "❌ Sélectionne le salon textuel "
+            "de ton royaume.",
+            ephemeral=True
+        )
+
+        return
+
+    if not salon.name.startswith(
+        "🔒・"
+    ):
+
+        await interaction.response.send_message(
+            "❌ Ce salon n'est pas un salon "
+            "de royaume.",
+            ephemeral=True
+        )
+
+        return
+
+    royaume = obtenir_royaume_par_salon(
+        salon
+    )
+
+    # ========================================================
+    # COMPATIBILITÉ ANCIENS ROYAUMES
+    # ========================================================
+
+    if royaume is None:
+
+        await interaction.response.send_message(
+            "❌ Ce royaume n'est pas enregistré "
+            "dans les données du bot.\n\n"
+            "Il a probablement été créé avant "
+            "l'installation de ce système.",
+            ephemeral=True
+        )
+
+        return
+
+    # ========================================================
+    # PERMISSION PROPRIÉTAIRE / STAFF
+    # ========================================================
+
+    if not est_proprietaire_ou_staff(
+        interaction,
+        royaume
+    ):
+
+        await interaction.response.send_message(
+            "❌ **Accès refusé.**\n\n"
+            "Seul le propriétaire de ce royaume "
+            "ou un membre du staff ayant "
+            "**Gérer les salons** peut effectuer "
+            "cette action.",
+            ephemeral=True
+        )
+
+        return
+
+    nom_royaume = royaume[
+        "nom"
+    ]
+
+    vocal = interaction.guild.get_channel(
+        royaume[
+            "salon_vocal"
+        ]
+    )
+
+    # ========================================================
+    # SUPPRIMER
+    # ========================================================
+
+    if action.value == "supprimer":
+
+        try:
+
+            if vocal:
+
+                await vocal.delete(
+                    reason=(
+                        f"Suppression du royaume "
+                        f"{nom_royaume} par "
+                        f"{interaction.user}"
+                    )
+                )
+
+            await salon.delete(
+                reason=(
+                    f"Suppression du royaume "
+                    f"{nom_royaume} par "
+                    f"{interaction.user}"
                 )
             )
 
         except discord.Forbidden:
 
             await interaction.response.send_message(
-                "❌ Le bot n'a pas les permissions "
-                "nécessaires pour créer les salons.",
+                "❌ Le bot ne possède pas les "
+                "permissions nécessaires.",
                 ephemeral=True
             )
 
             return
 
-        await interaction.response.send_message(
-            "🏰 **Royaume créé !**\n\n"
-            f"💬 {salon_textuel.mention}\n"
-            f"🔊 **{salon_vocal.name}**"
-        )
+        except discord.HTTPException as erreur:
 
-    # --------------------------------------------------------
-    # SUPPRIMER
-    # --------------------------------------------------------
-
-    elif action.value == "supprimer":
-
-        if not salon:
+            print(
+                f"❌ Erreur suppression : {erreur}"
+            )
 
             await interaction.response.send_message(
-                "❌ Sélectionne le salon textuel "
+                "❌ Une erreur Discord est survenue.",
+                ephemeral=True
+            )
+
+            return
+
+        donnees[
+            "royaumes"
+        ].pop(
+            str(salon.id),
+            None
+        )
+
+        sauvegarder()
+
+        await interaction.response.send_message(
+            f"🗑️ Le royaume "
+            f"**{nom_royaume}** "
+            "a été supprimé."
+        )
+
+        return
+
+    # ========================================================
+    # RENOMMER
+    # ========================================================
+
+    if action.value == "renommer":
+
+        if not nom:
+
+            await interaction.response.send_message(
+                "❌ Indique le nouveau nom "
                 "du royaume.",
                 ephemeral=True
             )
 
             return
 
-        if not salon.name.startswith(
-            "🔒・"
+        nouveau_nom = nettoyer_nom_royaume(
+            nom
+        )
+
+        if not nouveau_nom:
+
+            await interaction.response.send_message(
+                "❌ Le nouveau nom est invalide.",
+                ephemeral=True
+            )
+
+            return
+
+        nouveau_textuel = (
+            f"🔒・{nouveau_nom}"
+        )
+
+        nouveau_vocal = (
+            f"🔊・{nouveau_nom}"
+        )
+
+        if discord.utils.get(
+            interaction.guild.text_channels,
+            name=nouveau_textuel
         ):
 
             await interaction.response.send_message(
-                "❌ Ce n'est pas un salon de royaume.",
+                "❌ Ce nom est déjà utilisé.",
                 ephemeral=True
             )
 
             return
-
-        nom_royaume = salon.name.replace(
-            "🔒・",
-            "",
-            1
-        )
-
-        vocal = discord.utils.get(
-            interaction.guild.voice_channels,
-            name=f"🔊・{nom_royaume}"
-        )
-
-        try:
-
-            await salon.delete()
-
-            if vocal:
-
-                await vocal.delete()
-
-        except discord.Forbidden:
-
-            await interaction.response.send_message(
-                "❌ Le bot ne peut pas supprimer "
-                "ce salon.",
-                ephemeral=True
-            )
-
-            return
-
-        await interaction.response.send_message(
-            f"🗑️ Royaume **{nom_royaume}** supprimé."
-        )
-
-    # --------------------------------------------------------
-    # RENOMMER
-    # --------------------------------------------------------
-
-    elif action.value == "renommer":
-
-        if not salon or not nom:
-
-            await interaction.response.send_message(
-                "❌ Sélectionne le salon et "
-                "indique le nouveau nom.",
-                ephemeral=True
-            )
-
-            return
-
-        if not salon.name.startswith(
-            "🔒・"
-        ):
-
-            await interaction.response.send_message(
-                "❌ Ce n'est pas un salon de royaume.",
-                ephemeral=True
-            )
-
-            return
-
-        ancien_nom = salon.name.replace(
-            "🔒・",
-            "",
-            1
-        )
-
-        nouveau_nom = (
-            nom.lower()
-            .replace(" ", "-")
-        )
-
-        vocal = discord.utils.get(
-            interaction.guild.voice_channels,
-            name=f"🔊・{ancien_nom}"
-        )
 
         try:
 
             await salon.edit(
-                name=f"🔒・{nouveau_nom}"
+                name=nouveau_textuel,
+                reason=(
+                    f"Renommage du royaume "
+                    f"par {interaction.user}"
+                )
             )
 
             if vocal:
 
                 await vocal.edit(
-                    name=f"🔊・{nouveau_nom}"
+                    name=nouveau_vocal,
+                    reason=(
+                        f"Renommage du royaume "
+                        f"par {interaction.user}"
+                    )
                 )
 
         except discord.Forbidden:
@@ -1530,69 +1598,98 @@ async def salon(
 
             return
 
+        except discord.HTTPException:
+
+            await interaction.response.send_message(
+                "❌ Une erreur Discord est survenue.",
+                ephemeral=True
+            )
+
+            return
+
+        royaume[
+            "nom"
+        ] = nouveau_nom
+
+        royaume[
+            "salon_textuel"
+        ] = salon.id
+
+        if vocal:
+
+            royaume[
+                "salon_vocal"
+            ] = vocal.id
+
+        # La clé du dictionnaire reste l'ID du salon,
+        # mais celui-ci ne change pas lors d'un renommage.
+
+        sauvegarder()
+
         await interaction.response.send_message(
             f"✏️ Royaume renommé en "
             f"**{nouveau_nom}**."
         )
 
-    # --------------------------------------------------------
-    # AJOUTER
-    # --------------------------------------------------------
+        return
 
-    elif action.value == "ajouter":
+    # ========================================================
+    # AJOUTER UN MEMBRE
+    # ========================================================
 
-        if not salon or not membre:
+    if action.value == "ajouter":
+
+        if not membre:
 
             await interaction.response.send_message(
-                "❌ Sélectionne le salon "
-                "et le membre.",
+                "❌ Indique le membre à ajouter.",
                 ephemeral=True
             )
 
             return
 
-        if not salon.name.startswith(
-            "🔒・"
-        ):
+        if membre.bot:
 
             await interaction.response.send_message(
-                "❌ Ce n'est pas un salon de royaume.",
+                "❌ Tu ne peux pas ajouter un bot "
+                "à ton royaume.",
                 ephemeral=True
             )
 
             return
 
-        nom_royaume = salon.name.replace(
-            "🔒・",
-            "",
-            1
-        )
-
-        vocal = discord.utils.get(
-            interaction.guild.voice_channels,
-            name=f"🔊・{nom_royaume}"
-        )
-
-        permissions = discord.PermissionOverwrite(
-            view_channel=True,
-            send_messages=True,
-            read_message_history=True,
-            connect=True,
-            speak=True
+        permissions_membre = (
+            discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                connect=True,
+                speak=True
+            )
         )
 
         try:
 
             await salon.set_permissions(
                 membre,
-                overwrite=permissions
+                overwrite=permissions_membre,
+                reason=(
+                    f"Ajout de {membre} au royaume "
+                    f"{nom_royaume} par "
+                    f"{interaction.user}"
+                )
             )
 
             if vocal:
 
                 await vocal.set_permissions(
                     membre,
-                    overwrite=permissions
+                    overwrite=permissions_membre,
+                    reason=(
+                        f"Ajout de {membre} au royaume "
+                        f"{nom_royaume} par "
+                        f"{interaction.user}"
+                    )
                 )
 
         except discord.Forbidden:
@@ -1604,62 +1701,87 @@ async def salon(
             )
 
             return
+
+        except discord.HTTPException:
+
+            await interaction.response.send_message(
+                "❌ Une erreur Discord est survenue.",
+                ephemeral=True
+            )
+
+            return
+
+        membres_royaume = royaume.setdefault(
+            "membres",
+            []
+        )
+
+        if membre.id not in membres_royaume:
+
+            membres_royaume.append(
+                membre.id
+            )
+
+        sauvegarder()
 
         await interaction.response.send_message(
             f"➕ {membre.mention} a été ajouté "
             f"au royaume **{nom_royaume}**."
         )
 
-    # --------------------------------------------------------
-    # RETIRER
-    # --------------------------------------------------------
+        return
 
-    elif action.value == "retirer":
+    # ========================================================
+    # RETIRER UN MEMBRE
+    # ========================================================
 
-        if not salon or not membre:
+    if action.value == "retirer":
+
+        if not membre:
 
             await interaction.response.send_message(
-                "❌ Sélectionne le salon "
-                "et le membre.",
+                "❌ Indique le membre à retirer.",
                 ephemeral=True
             )
 
             return
 
-        if not salon.name.startswith(
-            "🔒・"
+        if membre.id == int(
+            royaume[
+                "proprietaire"
+            ]
         ):
 
             await interaction.response.send_message(
-                "❌ Ce n'est pas un salon de royaume.",
+                "❌ Tu ne peux pas retirer "
+                "le propriétaire du royaume.",
                 ephemeral=True
             )
 
             return
-
-        nom_royaume = salon.name.replace(
-            "🔒・",
-            "",
-            1
-        )
-
-        vocal = discord.utils.get(
-            interaction.guild.voice_channels,
-            name=f"🔊・{nom_royaume}"
-        )
 
         try:
 
             await salon.set_permissions(
                 membre,
-                overwrite=None
+                overwrite=None,
+                reason=(
+                    f"Retrait de {membre} du royaume "
+                    f"{nom_royaume} par "
+                    f"{interaction.user}"
+                )
             )
 
             if vocal:
 
                 await vocal.set_permissions(
                     membre,
-                    overwrite=None
+                    overwrite=None,
+                    reason=(
+                        f"Retrait de {membre} du royaume "
+                        f"{nom_royaume} par "
+                        f"{interaction.user}"
+                    )
                 )
 
         except discord.Forbidden:
@@ -1672,14 +1794,38 @@ async def salon(
 
             return
 
+        except discord.HTTPException:
+
+            await interaction.response.send_message(
+                "❌ Une erreur Discord est survenue.",
+                ephemeral=True
+            )
+
+            return
+
+        membres_royaume = royaume.setdefault(
+            "membres",
+            []
+        )
+
+        if membre.id in membres_royaume:
+
+            membres_royaume.remove(
+                membre.id
+            )
+
+        sauvegarder()
+
         await interaction.response.send_message(
             f"➖ {membre.mention} a été retiré "
             f"du royaume **{nom_royaume}**."
         )
 
+        return
+
 
 # ============================================================
-# MCSTATUS — SESSION HTTP RÉUTILISABLE
+# MCSTATUS — SESSION HTTP
 # ============================================================
 
 session_http = None
@@ -1698,8 +1844,10 @@ async def obtenir_session_http():
             total=6
         )
 
-        session_http = aiohttp.ClientSession(
-            timeout=timeout
+        session_http = (
+            aiohttp.ClientSession(
+                timeout=timeout
+            )
         )
 
     return session_http
@@ -1719,7 +1867,9 @@ async def obtenir_statut_minecraft():
 
     try:
 
-        session = await obtenir_session_http()
+        session = (
+            await obtenir_session_http()
+        )
 
         url = (
             "https://api.mcstatus.io/v2/status/java/"
@@ -1745,19 +1895,25 @@ async def obtenir_statut_minecraft():
 
                 if minecraft_en_ligne:
 
-                    joueurs = minecraft.get(
-                        "players",
-                        {}
+                    joueurs = (
+                        minecraft.get(
+                            "players",
+                            {}
+                        )
                     )
 
-                    minecraft_joueurs = joueurs.get(
-                        "online",
-                        0
+                    minecraft_joueurs = (
+                        joueurs.get(
+                            "online",
+                            0
+                        )
                     )
 
-                    minecraft_max = joueurs.get(
-                        "max",
-                        0
+                    minecraft_max = (
+                        joueurs.get(
+                            "max",
+                            0
+                        )
                     )
 
     except Exception as erreur:
@@ -1787,7 +1943,9 @@ async def obtenir_statut_bedrock():
 
     try:
 
-        session = await obtenir_session_http()
+        session = (
+            await obtenir_session_http()
+        )
 
         url = (
             "https://api.mcstatus.io/v2/status/bedrock/"
@@ -1813,19 +1971,25 @@ async def obtenir_statut_bedrock():
 
                 if bedrock_en_ligne:
 
-                    joueurs = bedrock.get(
-                        "players",
-                        {}
+                    joueurs = (
+                        bedrock.get(
+                            "players",
+                            {}
+                        )
                     )
 
-                    bedrock_joueurs = joueurs.get(
-                        "online",
-                        0
+                    bedrock_joueurs = (
+                        joueurs.get(
+                            "online",
+                            0
+                        )
                     )
 
-                    bedrock_max = joueurs.get(
-                        "max",
-                        0
+                    bedrock_max = (
+                        joueurs.get(
+                            "max",
+                            0
+                        )
                     )
 
     except Exception as erreur:
@@ -1883,11 +2047,6 @@ async def mettre_a_jour_statistiques(
             "record_discord"
         ] = membres
 
-        print(
-            f"🏆 Nouveau record Discord : "
-            f"{membres}"
-        )
-
     if java_joueurs > statistiques[
         "record_java"
     ]:
@@ -1896,11 +2055,6 @@ async def mettre_a_jour_statistiques(
             "record_java"
         ] = java_joueurs
 
-        print(
-            f"🏆 Nouveau record Java : "
-            f"{java_joueurs}"
-        )
-
     if bedrock_joueurs > statistiques[
         "record_bedrock"
     ]:
@@ -1908,11 +2062,6 @@ async def mettre_a_jour_statistiques(
         statistiques[
             "record_bedrock"
         ] = bedrock_joueurs
-
-        print(
-            f"🏆 Nouveau record Bedrock : "
-            f"{bedrock_joueurs}"
-        )
 
     total_joueurs = (
         java_joueurs
@@ -1926,11 +2075,6 @@ async def mettre_a_jour_statistiques(
         statistiques[
             "record_total"
         ] = total_joueurs
-
-        print(
-            f"🏆 Nouveau record total : "
-            f"{total_joueurs}"
-        )
 
     enregistrer_historique(
         guild,
@@ -1981,8 +2125,10 @@ async def mettre_a_jour_tableau_de_bord(
 
             continue
 
-        resultats = await mettre_a_jour_statistiques(
-            guild
+        resultats = (
+            await mettre_a_jour_statistiques(
+                guild
+            )
         )
 
         if resultats is None:
@@ -2029,10 +2175,14 @@ async def mettre_a_jour_tableau_de_bord(
                 "🔴 **Hors ligne**"
             )
 
-        if donnees["actif"]:
+        if donnees[
+            "actif"
+        ]:
 
             total_invites = sum(
-                donnees["invites"].values()
+                donnees[
+                    "invites"
+                ].values()
             )
 
             tournoi_status = (
@@ -2048,6 +2198,7 @@ async def mettre_a_jour_tableau_de_bord(
             )
 
         contenu = (
+
             "🏰 **AETHORIA**\n"
             "━━━━━━━━━━━━━━━━━━\n\n"
 
@@ -2136,8 +2287,10 @@ async def mettre_a_jour_salon_statistiques(
 
             continue
 
-        resultats = await mettre_a_jour_statistiques(
-            guild
+        resultats = (
+            await mettre_a_jour_statistiques(
+                guild
+            )
         )
 
         if resultats is None:
@@ -2219,8 +2372,10 @@ async def mettre_a_jour_salon_statistiques(
 
         if evolution:
 
-            evolution_texte = "\n".join(
-                evolution
+            evolution_texte = (
+                "\n".join(
+                    evolution
+                )
             )
 
         else:
@@ -2230,19 +2385,27 @@ async def mettre_a_jour_salon_statistiques(
             )
 
         total_invites = sum(
-            donnees["invites"].values()
+            donnees[
+                "invites"
+            ].values()
         )
 
         attente_invites = len(
-            donnees["en_attente"]
+            donnees[
+                "en_attente"
+            ]
         )
 
         meilleur_inviteur = "Aucun"
 
-        if donnees["invites"]:
+        if donnees[
+            "invites"
+        ]:
 
             meilleur_id, meilleur_score = max(
-                donnees["invites"].items(),
+                donnees[
+                    "invites"
+                ].items(),
                 key=lambda element: element[1]
             )
 
@@ -2267,47 +2430,63 @@ async def mettre_a_jour_salon_statistiques(
                 )
 
         contenu = (
+
             "📈 **STATISTIQUES AETHORIA**\n"
             "━━━━━━━━━━━━━━━━━━━━\n\n"
 
             "👥 **DISCORD**\n"
-            f"• Membres actuels : **{membres}**\n"
+
+            f"• Membres actuels : "
+            f"**{membres}**\n"
+
             f"• Aujourd'hui : "
             f"**+{rejoints_aujourd_hui} / "
             f"-{partis_aujourd_hui}**\n"
+
             f"• Cette semaine : "
             f"**+{rejoints_semaine} / "
             f"-{partis_semaine}**\n"
+
             f"• Record de membres : "
             f"**{statistiques['record_discord']}**\n\n"
 
             "⛏️ **MINECRAFT**\n"
+
             f"• Java : "
             f"**{java_joueurs}/{java_max}** "
             f"{'🟢' if java_en_ligne else '🔴'}\n"
+
             f"• Bedrock : "
             f"**{bedrock_joueurs}/{bedrock_max}** "
             f"{'🟢' if bedrock_en_ligne else '🔴'}\n"
+
             f"• Record Java : "
             f"**{statistiques['record_java']}**\n"
+
             f"• Record Bedrock : "
             f"**{statistiques['record_bedrock']}**\n"
+
             f"• Record total : "
             f"**{statistiques['record_total']}**\n\n"
 
             "🏆 **TOURNOI D'INVITATIONS**\n"
+
             f"• Invitations validées : "
             f"**{total_invites}**\n"
+
             f"• En attente : "
             f"**{attente_invites}**\n"
+
             f"• Meilleur inviteur : "
             f"{meilleur_inviteur}\n\n"
 
             "📊 **ÉVOLUTION DES MEMBRES — "
             "7 JOURS**\n"
+
             f"{evolution_texte}\n\n"
 
             "━━━━━━━━━━━━━━━━━━━━\n"
+
             "`Mise à jour automatique "
             "toutes les minutes`"
         )
@@ -2383,10 +2562,12 @@ async def mise_a_jour_complete(
 
 
 # ============================================================
-# BOUCLE — TOUTES LES MINUTES
+# BOUCLE — CHAQUE MINUTE
 # ============================================================
 
-@tasks.loop(minutes=1)
+@tasks.loop(
+    minutes=1
+)
 async def actualiser_tableaux():
 
     try:
@@ -2396,7 +2577,8 @@ async def actualiser_tableaux():
     except Exception as erreur:
 
         print(
-            f"❌ Erreur actualisation : {erreur}"
+            f"❌ Erreur actualisation tableaux : "
+            f"{erreur}"
         )
 
 
@@ -2435,7 +2617,7 @@ async def actualiser_midi_minuit():
 
 
 # ============================================================
-# ERREURS DES BOUCLES
+# ERREURS BOUCLES
 # ============================================================
 
 @actualiser_tableaux.error
@@ -2461,7 +2643,354 @@ async def erreur_midi_minuit(
 
 
 # ============================================================
-# BOT READY
+# /TOURNOI
+# ============================================================
+
+def peut_gerer_tournoi(
+    interaction
+):
+
+    return (
+        interaction.user.guild_permissions.manage_guild
+        or interaction.user.guild_permissions.administrator
+    )
+
+
+@tree.command(
+    name="tournoi",
+    description="Gérer le tournoi d'invitations"
+)
+@app_commands.describe(
+    action="Action du tournoi"
+)
+@app_commands.choices(
+    action=[
+
+        app_commands.Choice(
+            name="Démarrer",
+            value="demarrer"
+        ),
+
+        app_commands.Choice(
+            name="Arrêter",
+            value="arreter"
+        ),
+
+        app_commands.Choice(
+            name="Statut",
+            value="statut"
+        ),
+
+        app_commands.Choice(
+            name="Reset",
+            value="reset"
+        )
+    ]
+)
+async def tournoi(
+    interaction: discord.Interaction,
+    action: app_commands.Choice[str]
+):
+
+    if not peut_gerer_tournoi(
+        interaction
+    ):
+
+        await interaction.response.send_message(
+            "❌ Tu dois avoir la permission "
+            "**Gérer le serveur**.",
+            ephemeral=True
+        )
+
+        return
+
+    if action.value == "demarrer":
+
+        await interaction.response.defer()
+
+        donnees[
+            "actif"
+        ] = False
+
+        donnees[
+            "invites"
+        ] = {}
+
+        donnees[
+            "en_attente"
+        ] = {}
+
+        for tache in (
+            taches_validation.values()
+        ):
+
+            tache.cancel()
+
+        taches_validation.clear()
+
+        snapshot = await prendre_snapshot(
+            interaction.guild
+        )
+
+        if snapshot is None:
+
+            await interaction.followup.send(
+                "❌ Impossible de récupérer "
+                "les invitations.\n\n"
+                "Vérifie que le bot possède "
+                "**Gérer le serveur**."
+            )
+
+            return
+
+        donnees[
+            "actif"
+        ] = True
+
+        sauvegarder()
+
+        total_utilisations = sum(
+            snapshot.values()
+        )
+
+        await interaction.followup.send(
+            "🏆 **TOURNOI D'INVITATIONS DÉMARRÉ !**\n\n"
+            "📸 Le compteur commence **maintenant**.\n\n"
+            f"📨 Invitations existantes ignorées : "
+            f"**{total_utilisations} utilisations**\n\n"
+            "👤 Seuls les nouveaux membres invités "
+            "après maintenant pourront rapporter des points.\n\n"
+            "⏳ Le membre doit rester **24 heures** "
+            "pour valider le point."
+        )
+
+    elif action.value == "arreter":
+
+        donnees[
+            "actif"
+        ] = False
+
+        for tache in (
+            taches_validation.values()
+        ):
+
+            tache.cancel()
+
+        taches_validation.clear()
+
+        sauvegarder()
+
+        await interaction.response.send_message(
+            "🛑 **Tournoi arrêté.**\n\n"
+            "Les nouvelles invitations ne rapporteront "
+            "plus de points."
+        )
+
+    elif action.value == "statut":
+
+        statut = (
+            "🟢 **ACTIF**"
+            if donnees[
+                "actif"
+            ]
+            else
+            "🔴 **INACTIF**"
+        )
+
+        total = sum(
+            donnees[
+                "invites"
+            ].values()
+        )
+
+        attente = len(
+            donnees[
+                "en_attente"
+            ]
+        )
+
+        await interaction.response.send_message(
+            "🏆 **TOURNOI D'INVITATIONS**\n\n"
+            f"Statut : {statut}\n"
+            f"🏆 Points validés : **{total}**\n"
+            f"⏳ En attente : **{attente}**"
+        )
+
+    elif action.value == "reset":
+
+        donnees[
+            "actif"
+        ] = False
+
+        donnees[
+            "invites"
+        ] = {}
+
+        donnees[
+            "en_attente"
+        ] = {}
+
+        donnees[
+            "snapshots"
+        ] = {}
+
+        for tache in (
+            taches_validation.values()
+        ):
+
+            tache.cancel()
+
+        taches_validation.clear()
+
+        sauvegarder()
+
+        await interaction.response.send_message(
+            "🔄 **Tournoi réinitialisé !**\n\n"
+            "Toutes les statistiques du tournoi "
+            "ont été remises à zéro."
+        )
+
+
+# ============================================================
+# /INVITES
+# ============================================================
+
+@tree.command(
+    name="invites",
+    description="Voir les invitations d'un membre"
+)
+@app_commands.describe(
+    membre="Membre à consulter"
+)
+async def invites(
+    interaction: discord.Interaction,
+    membre: discord.Member | None = None
+):
+
+    membre = (
+        membre
+        or interaction.user
+    )
+
+    membre_id = str(
+        membre.id
+    )
+
+    points = donnees[
+        "invites"
+    ].get(
+        membre_id,
+        0
+    )
+
+    attente = sum(
+
+        1
+
+        for invitation in donnees[
+            "en_attente"
+        ].values()
+
+        if invitation[
+            "inviteur"
+        ] == membre.id
+    )
+
+    await interaction.response.send_message(
+        f"📨 **Invitations de "
+        f"{membre.display_name}**\n\n"
+        f"🏆 Validées : **{points}**\n"
+        f"⏳ En attente : **{attente}**"
+    )
+
+
+# ============================================================
+# /CLASSEMENT
+# ============================================================
+
+@tree.command(
+    name="classement",
+    description="Voir le classement des invitations"
+)
+async def classement(
+    interaction: discord.Interaction
+):
+
+    classement_data = sorted(
+        donnees[
+            "invites"
+        ].items(),
+        key=lambda element: element[1],
+        reverse=True
+    )
+
+    if not classement_data:
+
+        await interaction.response.send_message(
+            "🏆 **Classement vide**\n\n"
+            "Aucune invitation validée pour le moment."
+        )
+
+        return
+
+    texte = (
+        "🏆 **CLASSEMENT DES INVITATIONS**\n\n"
+    )
+
+    medailles = [
+        "🥇",
+        "🥈",
+        "🥉"
+    ]
+
+    for position, (
+        user_id,
+        points
+    ) in enumerate(
+        classement_data[:10],
+        start=1
+    ):
+
+        membre = (
+            interaction.guild.get_member(
+                int(user_id)
+            )
+        )
+
+        if membre:
+
+            nom = membre.mention
+
+        else:
+
+            nom = (
+                f"<@{user_id}>"
+            )
+
+        if position <= 3:
+
+            prefixe = medailles[
+                position - 1
+            ]
+
+        else:
+
+            prefixe = (
+                f"**{position}.**"
+            )
+
+        texte += (
+            f"{prefixe} {nom} — "
+            f"**{points}** invitations\n"
+        )
+
+    await interaction.response.send_message(
+        texte
+    )
+
+
+# ============================================================
+# READY
 # ============================================================
 
 @bot.event
@@ -2543,9 +3072,9 @@ async def on_ready():
             "==============================="
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # SYNCHRONISATION COMMANDES
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
@@ -2562,15 +3091,15 @@ async def on_ready():
             f"{erreur}"
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # RESTAURATION VALIDATIONS
-    # --------------------------------------------------------
+    # ========================================================
 
     restaurer_validations()
 
-    # --------------------------------------------------------
-    # DÉMARRAGE DES BOUCLES
-    # --------------------------------------------------------
+    # ========================================================
+    # BOUCLES
+    # ========================================================
 
     if not actualiser_tableaux.is_running():
 
@@ -2580,9 +3109,9 @@ async def on_ready():
 
         actualiser_midi_minuit.start()
 
-    # --------------------------------------------------------
+    # ========================================================
     # PREMIÈRE MISE À JOUR
-    # --------------------------------------------------------
+    # ========================================================
 
     try:
 
@@ -2609,7 +3138,7 @@ async def on_ready():
 
 
 # ============================================================
-# FERMETURE PROPRE
+# DÉCONNEXION
 # ============================================================
 
 @bot.event
@@ -2633,4 +3162,6 @@ if not TOKEN:
 
 else:
 
-    bot.run(TOKEN)
+    bot.run(
+        TOKEN
+    )
