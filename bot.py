@@ -1,6 +1,6 @@
-from pathlib import Path
 
-code = r'''import threading
+
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import discord
@@ -1592,11 +1592,3 @@ if not TOKEN:
     )
 else:
     bot.run(TOKEN)
-'''
-
-path = Path("/mnt/data/bot.py")
-path.write_text(code, encoding="utf-8")
-
-print(f"Fichier créé : {path}")
-print(f"Taille : {path.stat().st_size} octets")
-print("Aucun bloc ``` n'est présent dans le fichier.")
