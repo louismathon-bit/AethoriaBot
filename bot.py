@@ -10,7 +10,7 @@ import aiohttp
 import os
 import asyncio
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 # ============================================================
 
@@ -22,10 +22,8 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 ```
 def do_GET(self):
-
     self.send_response(200)
     self.end_headers()
-
     self.wfile.write(
         b"Aethoria Bot is online!"
     )
@@ -75,11 +73,17 @@ FICHIER_TOURNOI = "invites.json"
 
 TABLEAU_DE_BORD = "📊・tableau-de-bord"
 
-# Serveur Minecraft Java
+# ============================================================
+
+# SERVEURS MINECRAFT
+
+# ============================================================
+
+# JAVA — NE PAS MODIFIER
 
 SERVEUR_MINECRAFT = "aethoria.omgcraft.fr"
 
-# Serveur Minecraft Bedrock
+# BEDROCK — ATERNOS
 
 SERVEUR_BEDROCK = "Aethoria.aternos.me"
 PORT_BEDROCK = 27496
@@ -162,7 +166,11 @@ try:
 
     return donnees_chargees
 
-except Exception:
+except Exception as erreur:
+
+    print(
+        f"❌ Erreur chargement données : {erreur}"
+    )
 
     return donnees_par_defaut()
 ```
@@ -172,17 +180,25 @@ donnees = charger_donnees()
 def sauvegarder():
 
 ```
-with open(
-    FICHIER_TOURNOI,
-    "w",
-    encoding="utf-8"
-) as fichier:
+try:
 
-    json.dump(
-        donnees,
-        fichier,
-        indent=4,
-        ensure_ascii=False
+    with open(
+        FICHIER_TOURNOI,
+        "w",
+        encoding="utf-8"
+    ) as fichier:
+
+        json.dump(
+            donnees,
+            fichier,
+            indent=4,
+            ensure_ascii=False
+        )
+
+except Exception as erreur:
+
+    print(
+        f"❌ Erreur sauvegarde : {erreur}"
     )
 ```
 
@@ -219,8 +235,7 @@ try:
     print("📸 SNAPSHOT DES INVITATIONS")
     print(f"🏰 Serveur : {guild.name}")
     print(
-        f"📨 Invitations trouvées : "
-        f"{len(snapshot)}"
+        f"📨 Invitations trouvées : {len(snapshot)}"
     )
     print("")
 
@@ -229,9 +244,8 @@ try:
 except discord.Forbidden:
 
     print(
-        f"❌ Impossible de récupérer "
-        f"les invitations de : "
-        f"{guild.name}"
+        f"❌ Impossible de récupérer les invitations "
+        f"de {guild.name}"
     )
 
     return None
@@ -239,8 +253,7 @@ except discord.Forbidden:
 except Exception as erreur:
 
     print(
-        f"❌ Erreur lors du snapshot : "
-        f"{erreur}"
+        f"❌ Erreur snapshot : {erreur}"
     )
 
     return None
@@ -315,16 +328,14 @@ try:
 except discord.Forbidden:
 
     print(
-        f"❌ Impossible de récupérer "
-        f"les invitations de : "
-        f"{guild.name}"
+        f"❌ Impossible de récupérer les invitations "
+        f"de {guild.name}"
     )
 
 except Exception as erreur:
 
     print(
-        f"❌ Erreur invitations : "
-        f"{erreur}"
+        f"❌ Erreur invitations : {erreur}"
     )
 
 return None
@@ -615,9 +626,7 @@ if action.value == "demarrer":
     await interaction.response.defer()
 
     donnees["actif"] = False
-
     donnees["invites"] = {}
-
     donnees["en_attente"] = {}
 
     snapshot = await prendre_snapshot(
@@ -646,19 +655,13 @@ if action.value == "demarrer":
     await interaction.followup.send(
 
         "🏆 **TOURNOI D'INVITATIONS DÉMARRÉ !**\n\n"
-
-        "📸 Le compteur commence "
-        "**maintenant**.\n\n"
-
+        "📸 Le compteur commence **maintenant**.\n\n"
         f"📨 Invitations existantes ignorées : "
         f"**{total_utilisations} utilisations**\n\n"
-
-        "👤 Seuls les nouveaux membres "
-        "invités après maintenant pourront "
-        "rapporter des points.\n\n"
-
-        "⏳ Le membre doit rester "
-        "**24 heures** pour valider le point."
+        "👤 Seuls les nouveaux membres invités "
+        "après maintenant pourront rapporter des points.\n\n"
+        "⏳ Le membre doit rester **24 heures** "
+        "pour valider le point."
 
     )
 
@@ -671,7 +674,6 @@ elif action.value == "arreter":
     await interaction.response.send_message(
 
         "🛑 **Tournoi arrêté.**\n\n"
-
         "Les nouvelles invitations ne "
         "rapporteront plus de points."
 
@@ -706,11 +708,8 @@ elif action.value == "statut":
 elif action.value == "reset":
 
     donnees["actif"] = False
-
     donnees["invites"] = {}
-
     donnees["en_attente"] = {}
-
     donnees["snapshots"] = {}
 
     sauvegarder()
@@ -718,7 +717,6 @@ elif action.value == "reset":
     await interaction.response.send_message(
 
         "🔄 **Tournoi réinitialisé !**\n\n"
-
         "Toutes les statistiques ont été "
         "remises à zéro."
 
@@ -776,9 +774,7 @@ await interaction.response.send_message(
 
     f"📨 **Invitations de "
     f"{membre.display_name}**\n\n"
-
     f"🏆 Validées : **{points}**\n"
-
     f"⏳ En attente : **{attente}**"
 
 )
@@ -1017,18 +1013,15 @@ if action.value == "creer":
     if not categorie:
 
         await interaction.response.send_message(
-
             f"❌ La catégorie "
             f"`{CATEGORIE_ROYAUME}` "
             f"est introuvable.",
-
             ephemeral=True
         )
 
         return
 
     nom_textuel = f"🔒・{nom}"
-
     nom_vocal = f"🔊・{nom}"
 
     textuel_existant = discord.utils.get(
@@ -1044,10 +1037,7 @@ if action.value == "creer":
     if textuel_existant or vocal_existant:
 
         await interaction.response.send_message(
-
-            f"❌ Le royaume **{nom}** "
-            f"existe déjà.",
-
+            f"❌ Le royaume **{nom}** existe déjà.",
             ephemeral=True
         )
 
@@ -1062,48 +1052,34 @@ if action.value == "creer":
 
         salon_textuel = (
             await interaction.guild.create_text_channel(
-
                 name=nom_textuel,
-
                 category=categorie,
-
                 overwrites=permissions
-
             )
         )
 
         salon_vocal = (
             await interaction.guild.create_voice_channel(
-
                 name=nom_vocal,
-
                 category=categorie,
-
                 overwrites=permissions
-
             )
         )
 
     except discord.Forbidden:
 
         await interaction.response.send_message(
-
             "❌ Le bot n'a pas les permissions "
             "nécessaires pour créer les salons.",
-
             ephemeral=True
         )
 
         return
 
     await interaction.response.send_message(
-
         "🏰 **Royaume créé !**\n\n"
-
         f"💬 {salon_textuel.mention}\n"
-
         f"🔊 **{salon_vocal.name}**"
-
     )
 
 elif action.value == "supprimer":
@@ -1111,10 +1087,8 @@ elif action.value == "supprimer":
     if not salon:
 
         await interaction.response.send_message(
-
             "❌ Sélectionne le salon textuel "
             "du royaume.",
-
             ephemeral=True
         )
 
@@ -1123,9 +1097,7 @@ elif action.value == "supprimer":
     if not salon.name.startswith("🔒・"):
 
         await interaction.response.send_message(
-
             "❌ Ce n'est pas un salon de royaume.",
-
             ephemeral=True
         )
 
@@ -1138,11 +1110,8 @@ elif action.value == "supprimer":
     )
 
     vocal = discord.utils.get(
-
         interaction.guild.voice_channels,
-
         name=f"🔊・{nom_royaume}"
-
     )
 
     try:
@@ -1150,25 +1119,20 @@ elif action.value == "supprimer":
         await salon.delete()
 
         if vocal:
-
             await vocal.delete()
 
     except discord.Forbidden:
 
         await interaction.response.send_message(
-
             "❌ Le bot ne peut pas supprimer "
             "ce salon.",
-
             ephemeral=True
         )
 
         return
 
     await interaction.response.send_message(
-
         f"🗑️ Royaume **{nom_royaume}** supprimé."
-
     )
 
 elif action.value == "renommer":
@@ -1176,10 +1140,8 @@ elif action.value == "renommer":
     if not salon or not nom:
 
         await interaction.response.send_message(
-
             "❌ Sélectionne le salon et "
             "indique le nouveau nom.",
-
             ephemeral=True
         )
 
@@ -1188,9 +1150,7 @@ elif action.value == "renommer":
     if not salon.name.startswith("🔒・"):
 
         await interaction.response.send_message(
-
             "❌ Ce n'est pas un salon de royaume.",
-
             ephemeral=True
         )
 
@@ -1208,11 +1168,8 @@ elif action.value == "renommer":
     )
 
     vocal = discord.utils.get(
-
         interaction.guild.voice_channels,
-
         name=f"🔊・{ancien_nom}"
-
     )
 
     try:
@@ -1230,20 +1187,16 @@ elif action.value == "renommer":
     except discord.Forbidden:
 
         await interaction.response.send_message(
-
             "❌ Le bot ne peut pas renommer "
             "ce royaume.",
-
             ephemeral=True
         )
 
         return
 
     await interaction.response.send_message(
-
         f"✏️ Royaume renommé en "
         f"**{nouveau_nom}**."
-
     )
 
 elif action.value == "ajouter":
@@ -1251,10 +1204,8 @@ elif action.value == "ajouter":
     if not salon or not membre:
 
         await interaction.response.send_message(
-
             "❌ Sélectionne le salon et "
             "le membre.",
-
             ephemeral=True
         )
 
@@ -1263,9 +1214,7 @@ elif action.value == "ajouter":
     if not salon.name.startswith("🔒・"):
 
         await interaction.response.send_message(
-
             "❌ Ce n'est pas un salon de royaume.",
-
             ephemeral=True
         )
 
@@ -1278,25 +1227,16 @@ elif action.value == "ajouter":
     )
 
     vocal = discord.utils.get(
-
         interaction.guild.voice_channels,
-
         name=f"🔊・{nom_royaume}"
-
     )
 
     permissions = discord.PermissionOverwrite(
-
         view_channel=True,
-
         send_messages=True,
-
         read_message_history=True,
-
         connect=True,
-
         speak=True
-
     )
 
     try:
@@ -1316,20 +1256,16 @@ elif action.value == "ajouter":
     except discord.Forbidden:
 
         await interaction.response.send_message(
-
             "❌ Le bot ne peut pas modifier "
             "les permissions de ce royaume.",
-
             ephemeral=True
         )
 
         return
 
     await interaction.response.send_message(
-
         f"➕ {membre.mention} a été ajouté "
         f"au royaume **{nom_royaume}**."
-
     )
 
 elif action.value == "retirer":
@@ -1337,10 +1273,8 @@ elif action.value == "retirer":
     if not salon or not membre:
 
         await interaction.response.send_message(
-
             "❌ Sélectionne le salon et "
             "le membre.",
-
             ephemeral=True
         )
 
@@ -1349,9 +1283,7 @@ elif action.value == "retirer":
     if not salon.name.startswith("🔒・"):
 
         await interaction.response.send_message(
-
             "❌ Ce n'est pas un salon de royaume.",
-
             ephemeral=True
         )
 
@@ -1364,11 +1296,8 @@ elif action.value == "retirer":
     )
 
     vocal = discord.utils.get(
-
         interaction.guild.voice_channels,
-
         name=f"🔊・{nom_royaume}"
-
     )
 
     try:
@@ -1388,20 +1317,16 @@ elif action.value == "retirer":
     except discord.Forbidden:
 
         await interaction.response.send_message(
-
             "❌ Le bot ne peut pas modifier "
             "les permissions de ce royaume.",
-
             ephemeral=True
         )
 
         return
 
     await interaction.response.send_message(
-
         f"➖ {membre.mention} a été retiré "
         f"du royaume **{nom_royaume}**."
-
     )
 ```
 
@@ -1415,9 +1340,7 @@ async def obtenir_statut_minecraft():
 
 ```
 minecraft_en_ligne = False
-
 minecraft_joueurs = 0
-
 minecraft_max = 0
 
 try:
@@ -1468,7 +1391,7 @@ try:
 except Exception as erreur:
 
     print(
-        f"❌ Erreur statut Minecraft : "
+        f"❌ Erreur statut Minecraft Java : "
         f"{erreur}"
     )
 
@@ -1489,9 +1412,7 @@ async def obtenir_statut_bedrock():
 
 ```
 bedrock_en_ligne = False
-
 bedrock_joueurs = 0
-
 bedrock_max = 0
 
 try:
@@ -1542,7 +1463,7 @@ try:
 except Exception as erreur:
 
     print(
-        f"❌ Erreur statut Bedrock : "
+        f"❌ Erreur statut Minecraft Bedrock : "
         f"{erreur}"
     )
 
@@ -1583,10 +1504,6 @@ for guild in guilds:
     if salon is None:
         continue
 
-    # ====================================================
-    # NOMBRE DE MEMBRES
-    # ====================================================
-
     membres = sum(
         1
         for membre in guild.members
@@ -1594,7 +1511,7 @@ for guild in guilds:
     )
 
     # ====================================================
-    # STATUT JAVA
+    # JAVA
     # ====================================================
 
     (
@@ -1619,7 +1536,7 @@ for guild in guilds:
         )
 
     # ====================================================
-    # STATUT BEDROCK
+    # BEDROCK
     # ====================================================
 
     (
@@ -1644,7 +1561,7 @@ for guild in guilds:
         )
 
     # ====================================================
-    # TOURNOI
+    # CONTENU DU DASHBOARD
     # ====================================================
 
     if donnees["actif"]:
@@ -1772,11 +1689,11 @@ await mettre_a_jour_tableau_de_bord()
 
 @tasks.loop(
 time=[
-**import**("datetime").time(
+time(
 hour=0,
 minute=0
 ),
-**import**("datetime").time(
+time(
 hour=12,
 minute=0
 )
@@ -1786,8 +1703,7 @@ async def actualiser_midi_minuit():
 
 ```
 print(
-    "🕛 Mise à jour programmée "
-    "00h00 / 12h00"
+    "🕛 Mise à jour programmée 00h00 / 12h00"
 )
 
 await mettre_a_jour_tableau_de_bord()
@@ -1795,7 +1711,7 @@ await mettre_a_jour_tableau_de_bord()
 
 # ============================================================
 
-# GESTION DES ERREURS DES BOUCLES
+# GESTION DES ERREURS
 
 # ============================================================
 
@@ -1854,6 +1770,14 @@ print(
 )
 print(
     f"🌍 Serveurs : {len(bot.guilds)}"
+)
+print("")
+print(
+    f"⛏️ Java : {SERVEUR_MINECRAFT}"
+)
+print(
+    f"📱 Bedrock : "
+    f"{SERVEUR_BEDROCK}:{PORT_BEDROCK}"
 )
 print("")
 
@@ -1926,4 +1850,3 @@ else:
 
 ```
 bot.run(TOKEN)
-
