@@ -540,91 +540,151 @@ async def prendre_snapshot(
 # ============================================================
 # DÉTECTER L'INVITATION UTILISÉE
 # ============================================================
-
 async def trouver_inviteur(
-    guild
+    guild,
+    tentatives=5,
+    delai=2
 ):
 
-    try:
+    """
+    Détecte l'invitation utilisée par un nouveau membre.
 
-        invitations = await guild.invites()
+    Discord peut mettre quelques secondes à actualiser
+    le nombre d'utilisations d'une invitation.
+    On effectue donc plusieurs vérifications.
+    """
 
-        snapshot = donnees[
-            "snapshots"
-        ].get(
-            str(guild.id),
-            {}
-        )
+    for tentative in range(tentatives):
 
-        invitation_trouvee = None
+        try:
 
-        plus_grande_difference = 0
+            invitations = await guild.invites()
 
-        nouveau_snapshot = {}
-
-        for invitation in invitations:
-
-            anciennes_utilisations = (
-                snapshot.get(
-                    invitation.code,
-                    0
-                )
+            snapshot = donnees[
+                "snapshots"
+            ].get(
+                str(guild.id),
+                {}
             )
 
-            nouvelles_utilisations = (
-                invitation.uses
-                or 0
-            )
+            invitation_trouvee = None
 
-            difference = (
-                nouvelles_utilisations
-                - anciennes_utilisations
-            )
+            plus_grande_difference = 0
 
-            if (
-                difference
-                > plus_grande_difference
-            ):
+            nouveau_snapshot = {}
 
-                plus_grande_difference = (
-                    difference
+            for invitation in invitations:
+
+                anciennes_utilisations = (
+                    snapshot.get(
+                        invitation.code,
+                        0
+                    )
                 )
 
-                invitation_trouvee = (
-                    invitation
+                nouvelles_utilisations = (
+                    invitation.uses
+                    or 0
                 )
 
-            nouveau_snapshot[
-                invitation.code
-            ] = nouvelles_utilisations
+                difference = (
+                    nouvelles_utilisations
+                    - anciennes_utilisations
+                )
 
-        donnees[
-            "snapshots"
-        ][
-            str(guild.id)
-        ] = nouveau_snapshot
+                if difference > plus_grande_difference:
 
-        sauvegarder()
+                    plus_grande_difference = (
+                        difference
+                    )
 
-        if invitation_trouvee:
+                    invitation_trouvee = (
+                        invitation
+                    )
 
-            return invitation_trouvee.inviter
+                nouveau_snapshot[
+                    invitation.code
+                ] = nouvelles_utilisations
 
-    except discord.Forbidden:
+            # Mise à jour du snapshot
+            donnees[
+                "snapshots"
+            ][
+                str(guild.id)
+            ] = nouveau_snapshot
 
-        print(
-            f"❌ Impossible de lire "
-            f"les invitations de {guild.name}"
-        )
+            sauvegarder()
 
-    except Exception as erreur:
+            # Une invitation a été utilisée
+            if invitation_trouvee:
 
-        print(
-            f"❌ Erreur invitations : {erreur}"
-        )
+                print(
+                    "======================================"
+                )
+
+                print(
+                    "📨 INVITATION DÉTECTÉE"
+                )
+
+                print(
+                    f"Code : {invitation_trouvee.code}"
+                )
+
+                print(
+                    f"Inviteur : "
+                    f"{invitation_trouvee.inviter}"
+                )
+
+                print(
+                    "======================================"
+                )
+
+                return invitation_trouvee.inviter
+
+            # Discord n'a peut-être pas encore actualisé
+            if tentative < tentatives - 1:
+
+                await asyncio.sleep(
+                    delai
+                )
+
+        except discord.Forbidden:
+
+            print(
+                f"❌ Impossible de récupérer "
+                f"les invitations de "
+                f"{guild.name}."
+            )
+
+            print(
+                "⚠️ Vérifie que le bot possède "
+                "« Gérer le serveur »."
+            )
+
+            return None
+
+        except Exception as erreur:
+
+            print(
+                f"❌ Erreur détection invitation "
+                f"(tentative "
+                f"{tentative + 1}/"
+                f"{tentatives}) : "
+                f"{erreur}"
+            )
+
+            if tentative < tentatives - 1:
+
+                await asyncio.sleep(
+                    delai
+                )
+
+    print(
+        "⚠️ Aucune invitation détectée "
+        "après plusieurs tentatives."
+    )
 
     return None
-
 
 # ============================================================
 # TÂCHES VALIDATION
@@ -852,23 +912,70 @@ async def on_member_join(
         )
     )
 
+    # ========================================================
+    # TOURNOI INACTIF
+    # ========================================================
+
     if not donnees[
         "actif"
     ]:
 
+        print(
+            "ℹ️ Tournoi inactif : "
+            "aucun point attribué."
+        )
+
         return
 
+    # ========================================================
+    # LAISSER DISCORD ACTUALISER LES INVITATIONS
+    # ========================================================
+
+    await asyncio.sleep(
+        2
+    )
+
+    # ========================================================
+    # DÉTECTION DE L'INVITEUR
+    # ========================================================
+
     inviter = await trouver_inviteur(
-        member.guild
+        member.guild,
+        tentatives=5,
+        delai=2
     )
 
     if not inviter:
+
+        print(
+            f"⚠️ Impossible de déterminer "
+            f"qui a invité {member}."
+        )
 
         return
 
     membre_id = str(
         member.id
     )
+
+    # ========================================================
+    # ÉVITER LES DOUBLONS
+    # ========================================================
+
+    if membre_id in donnees[
+        "en_attente"
+    ]:
+
+        print(
+            f"⚠️ {member} est déjà "
+            f"en attente de validation."
+        )
+
+        return
+
+    # ========================================================
+    # VALIDATION DANS 24 HEURES
+    # ========================================================
 
     validation = (
         datetime.utcnow()
@@ -890,6 +997,14 @@ async def on_member_join(
 
     sauvegarder()
 
+    # ========================================================
+    # LOG
+    # ========================================================
+
+    print(
+        "======================================"
+    )
+
     print(
         "📨 NOUVELLE INVITATION"
     )
@@ -906,6 +1021,14 @@ async def on_member_join(
         "⏳ Validation dans 24 heures"
     )
 
+    print(
+        "======================================"
+    )
+
+    # ========================================================
+    # LANCEMENT DU COMPTEUR 24H
+    # ========================================================
+
     tache = asyncio.create_task(
         valider_invitation(
             member.id,
@@ -917,7 +1040,6 @@ async def on_member_join(
     taches_validation[
         membre_id
     ] = tache
-
 
 # ============================================================
 # MEMBRE QUITTE
